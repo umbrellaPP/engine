@@ -176,6 +176,7 @@ let Label = cc.Class({
 
                 if (this.string !== oldValue) {
                     this._updateRenderData();
+                    this.node.emit('string-changed');
                 }
 
                 this._checkStringEmpty();
@@ -246,6 +247,7 @@ let Label = cc.Class({
 
                 this._fontSize = value;
                 this._updateRenderData();
+                this.node.emit('fontSize-changed');
             },
             tooltip: CC_DEV && 'i18n:COMPONENT.label.font_size',
         },

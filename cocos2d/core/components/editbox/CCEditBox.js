@@ -386,8 +386,9 @@ let EditBox = cc.Class({
     },
 
     _init () {
-        this._upgradeComponent();
-        this.node.on(cc.Node.EventType.SIZE_CHANGED, this._syncSize, this);
+        if (CC_EDITOR) {
+            this._upgradeComponent();
+        }
         let impl = this._impl = new EditBoxImpl();
         let size = this.node.getContentSize();
 
@@ -631,14 +632,39 @@ let EditBox = cc.Class({
 
     __preload () {
         if (!CC_EDITOR) {
-            this._registerEvent();
+            this._registerTouchEvent();
         }
         this._init();
+        this._registerEvents();
     },
 
-    _registerEvent () {
+    _registerTouchEvent () {
         this.node.on(cc.Node.EventType.TOUCH_START, this._onTouchBegan, this);
         this.node.on(cc.Node.EventType.TOUCH_END, this._onTouchEnded, this);
+    },
+
+    _registerEvents () {
+        let self = this;
+        let textLabel = this.textLabel;
+        let placeholderLabel = this.placeholderLabel;
+        
+        this.node.on(cc.Node.EventType.SIZE_CHANGED, this._syncSize, this);
+        if (textLabel) {
+            textLabel.node.on('string-changed', function () {
+                self.string = textLabel.string;
+            });
+            textLabel.node.on('color-changed', function () {
+                self._impl.setFontColor(textLabel.node.color);
+            });
+            textLabel.node.on('fontSize-changed', function () {
+                self._impl.setFontSize(textLabel.fontSize);
+            });
+        }
+        if (placeholderLabel) {
+            placeholderLabel.node.on('string-changed', function () {
+                self.placeholder = placeholderLabel.string;
+            });
+        }
     },
 
     _onTouchBegan (event) {
@@ -690,19 +716,6 @@ let EditBox = cc.Class({
     update () {
         if (this._impl) {
             this._impl.update();
-
-            let textLabel = this.textLabel;
-            let placeholderLabel = this.placeholderLabel;
-
-            if (textLabel) {
-                textLabel.string = this.string;
-                this._impl.setFontSize(textLabel.fontSize);
-                this._impl.setFontColor(textLabel.node.color);
-            }
-    
-            if (placeholderLabel) {
-                placeholderLabel.string = this.placeholder;
-            }
         }
     }
 
