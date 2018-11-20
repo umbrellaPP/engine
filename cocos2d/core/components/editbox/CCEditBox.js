@@ -62,6 +62,11 @@ let EditBox = cc.Class({
 
     properties: {
         _useOriginalSize: true,
+        // old value of textLabelString
+        _textLabelString: {
+            serializable: false,
+            default: '',
+        },
         _string: '',
         /**
          * !#en Input string of EditBox.
@@ -219,15 +224,20 @@ let EditBox = cc.Class({
          */
         placeholder: {
             tooltip: CC_DEV && 'i18n:COMPONENT.editbox.placeholder',
-            default: 'Enter text here...',
-            notify () {
+            get () {
                 if (this.placeholderLabel) {
-                    this.placeholderLabel.string = this.placeholder;
+                    return this.placeholderLabel.string;
+                }
+                return '';
+            },
+            set (value) {
+                if (this.placeholderLabel) {
+                    this.placeholderLabel.string = value;
                 }
                 if (this._impl) {
                     this._impl.setPlaceholderText(this.placeholder);
                 }
-            }
+            },
         },
 
         _placeholderFontSize: {
@@ -386,8 +396,9 @@ let EditBox = cc.Class({
     },
 
     _init () {
-        this._upgradeComponent();
-        this.node.on(cc.Node.EventType.SIZE_CHANGED, this._syncSize, this);
+        if (CC_EDITOR) {
+            this._upgradeComponent();
+        }
         let impl = this._impl = new EditBoxImpl();
         let size = this.node.getContentSize();
 
@@ -405,6 +416,8 @@ let EditBox = cc.Class({
 
         this._updateStayOnTop();
         this._updateString(this.string);
+        
+        this.node.on(cc.Node.EventType.SIZE_CHANGED, this._syncSize, this);
     },
 
     _updateStayOnTop () {
@@ -562,6 +575,7 @@ let EditBox = cc.Class({
         }
 
         textLabel.string = displayText;
+        this._textLabelString = displayText;
         this._impl && this._impl.setString(text);
         if (!this._impl._editing && !this.stayOnTop) {
             this._showLabels();
@@ -695,13 +709,12 @@ let EditBox = cc.Class({
             let placeholderLabel = this.placeholderLabel;
 
             if (textLabel) {
-                textLabel.string = this.string;
+                if (this._textLabelString !== textLabel.string) {
+                    cc.warn('Cannot set textLabel.string, use editbox.string instead.');
+                    this._updateString(this.string);
+                }
                 this._impl.setFontSize(textLabel.fontSize);
                 this._impl.setFontColor(textLabel.node.color);
-            }
-    
-            if (placeholderLabel) {
-                placeholderLabel.string = this.placeholder;
             }
         }
     }
