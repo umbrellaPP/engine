@@ -43,35 +43,40 @@ cc.screen = /** @lends cc.screen# */{
             'exitFullscreen',
             'fullscreenchange',
             'fullscreenEnabled',
-            'fullscreenElement'
+            'fullscreenElement',
+            'fullscreenerror',
         ],
         [
             'requestFullScreen',
             'exitFullScreen',
             'fullScreenchange',
             'fullScreenEnabled',
-            'fullScreenElement'
+            'fullScreenElement',
+            'fullscreenerror',
         ],
         [
             'webkitRequestFullScreen',
             'webkitCancelFullScreen',
             'webkitfullscreenchange',
             'webkitIsFullScreen',
-            'webkitCurrentFullScreenElement'
+            'webkitCurrentFullScreenElement',
+            'webkitfullscreenerror',
         ],
         [
             'mozRequestFullScreen',
             'mozCancelFullScreen',
             'mozfullscreenchange',
             'mozFullScreen',
-            'mozFullScreenElement'
+            'mozFullScreenElement',
+            'mozfullscreenerror',
         ],
         [
             'msRequestFullscreen',
             'msExitFullscreen',
             'MSFullscreenChange',
             'msFullscreenEnabled',
-            'msFullscreenElement'
+            'msFullscreenElement',
+            'msfullscreenerror',
         ]
     ],
     
@@ -93,7 +98,7 @@ cc.screen = /** @lends cc.screen# */{
         }
 
         this._supportsFullScreen = (this._fn.requestFullscreen !== undefined);
-        this._touchEvent = ('ontouchstart' in window) ? 'touchstart' : 'mousedown';
+        this._touchEvent = ('ontouchend' in window) ? 'touchend' : 'mousedown';
     },
     
     /**
@@ -172,15 +177,32 @@ cc.screen = /** @lends cc.screen# */{
      */
     autoFullScreen: function (element, onFullScreenChange) {
         element = element || document.body;
-        var touchTarget = cc.game.canvas || element;
-        var theScreen = this;
-        // Function bind will be too complicated here because we need the callback function's reference to remove the listener
-        function callback() {
-            touchTarget.removeEventListener(theScreen._touchEvent, callback);
-            theScreen.requestFullScreen(element, onFullScreenChange);
-        }
+        this.preRegisterTouchEvent(element, onFullScreenChange);        
         this.requestFullScreen(element, onFullScreenChange);
-        touchTarget.addEventListener(this._touchEvent, callback);
-    }
+    },
+
+    preRegisterTouchEvent (element, onFullScreenChange) {
+        let self = this;
+        let touchTarget = cc.game.canvas || element;
+        let eventName = this._fn.fullscreenerror;
+
+        function touchEventCallback () {
+            touchTarget.removeEventListener(self._touchEvent, touchEventCallback);
+            self.requestFullScreen(element, onFullScreenChange);
+        }
+
+        function registerTouchEvent () {
+            element.removeEventListener(eventName, registerTouchEvent);
+            touchTarget.addEventListener(self._touchEvent, touchEventCallback);
+        }
+
+        // If full screen failed, register a touch event
+        element.addEventListener(eventName, registerTouchEvent);
+    },
 };
+
+function registerTouchEvent (screen) {
+
+}
+
 cc.screen.init();
