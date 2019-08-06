@@ -55,6 +55,8 @@ let WebViewImpl = cc.Class({
         this._h = 0;
         //
         this.__eventListeners = {};
+        
+        this._matViewUpdated = false;
     },
 
     _updateVisibility () {
@@ -98,6 +100,7 @@ let WebViewImpl = cc.Class({
         div.style.position = "absolute";
         div.style.bottom = "0px";
         div.style.left = "0px";
+        div.style.width = '0px';  // Hidden, update dom matrix after view matrix updated
     },
 
     _setOpacity (opacity) {
@@ -144,19 +147,31 @@ let WebViewImpl = cc.Class({
         this._div = document.createElement('div');
         this._div.style.background = 'rgba(255, 255, 255, 0.8)';
         this._div.style.color = 'rgb(51, 51, 51)';
-        this._div.style.height = w + 'px';
-        this._div.style.width = h + 'px';
         this._div.style.position = 'absolute';
         this._div.style.bottom = '0px';
         this._div.style.left = '0px';
         this._div.style['word-wrap'] = 'break-word';
+        this._div.style.width = '0px';  // Hidden, update dom matrix after view matrix updated
         cc.game.container.appendChild(this._div);
+        this._handleMatView();
     } : function (w, h) {
         if (!this._div) {
             this._createNativeControl(w, h);
         }
         else {
             this._updateSize(w, h);
+        }
+        this._handleMatView();
+    },
+
+    _handleMatView () {
+        if (!this._matViewUpdated) {
+            let self = this;
+            let beforeDrawCallback = function () {
+                self._matViewUpdated = true;
+                cc.director.off(cc.Director.EVENT_BEFORE_DRAW, beforeDrawCallback);
+            };
+            cc.director.on(cc.Director.EVENT_BEFORE_DRAW, beforeDrawCallback);
         }
     },
 
@@ -341,7 +356,7 @@ let WebViewImpl = cc.Class({
     },
 
     updateMatrix (node) {
-        if (!this._div || !this._visible) return;
+        if (!this._div || !this._visible || !this._matViewUpdated) return;
 
         node.getWorldMatrix(_mat4_temp);
         let renderCamera = cc.Camera._findRendererCamera(node);
