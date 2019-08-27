@@ -384,26 +384,17 @@ var game = {
     },
 
     _prepareFinished (cb) {
-
         if (CC_PREVIEW && window.__modular) {
             window.__modular.run();
         }
-
+        // Log engine version
+        console.log('Cocos Creator v' + cc.ENGINE_VERSION);
+        
         this._prepared = true;
-
-        // Init engine
-        this._initEngine();
-        cc.AssetLibrary._loadBuiltins(() => {
-            // Log engine version
-            console.log('Cocos Creator v' + cc.ENGINE_VERSION);
-
-            this._setAnimFrame();
-            this._runMainLoop();
-
-            this.emit(this.EVENT_GAME_INITED);
-
-            if (cb) cb();
-        });
+        this._setAnimFrame();
+        this._runMainLoop();
+        this.emit(this.EVENT_GAME_INITED);
+        cb && cb();
     },
 
     eventTargetOn: EventTarget.prototype.on,
@@ -481,19 +472,22 @@ var game = {
             if (cb) cb();
             return;
         }
-
-        // Load game scripts
-        let jsList = this.config.jsList;
-        if (jsList && jsList.length > 0) {
-            var self = this;
-            cc.loader.load(jsList, function (err) {
-                if (err) throw new Error(JSON.stringify(err));
+        let self = this;
+        // Init engine
+        this._initEngine();
+        cc.AssetLibrary._loadBuiltins(function () {
+            // Load game scripts
+            let jsList = self.config.jsList;
+            if (jsList && jsList.length > 0) {
+                cc.loader.load(jsList, function (err) {
+                    if (err) throw new Error(JSON.stringify(err));
+                    self._prepareFinished(cb);
+                });
+            }
+            else {
                 self._prepareFinished(cb);
-            });
-        }
-        else {
-            this._prepareFinished(cb);
-        }
+            }
+        });
     },
 
     /**
