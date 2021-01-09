@@ -31,6 +31,9 @@
         "./node_modules/@cocos/ammo/Ammo",
         "./node_modules/@cocos/physx/PhysX",
         "./node_modules/@types/jest/index"
+      ],
+      "typeRoots": [
+        "./@types/HAL"
       ]
     },
     "include": [
