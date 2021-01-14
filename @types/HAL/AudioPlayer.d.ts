@@ -11,7 +11,8 @@ declare module 'HAL' {
     export class IAudioPlayer {
         private constructor (nativeAudio: any);
         static load (url: string,  opts?: AudioLoadOptions): Promise<IAudioPlayer>;
-        private static _loadNative(url: string, opts?: AudioLoadOptions): Promise<any>;
+        static loadNative(url: string, opts?: AudioLoadOptions): Promise<any>;
+        static playNative (nativeAudio: any): Promise<void>;
 
         get loop (): boolean;
         set loop (val: boolean);

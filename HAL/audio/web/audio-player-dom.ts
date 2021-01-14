@@ -1,13 +1,16 @@
 import { AudioLoadOptions, AudioType, IAudioPlayer } from 'HAL';
 
 export class AudioPlayerDOM implements IAudioPlayer {
-    constructor (nativeAudio: any) {
+    constructor (nativeAudio: HTMLAudioElement) {
         throw new Error('Method not implemented.');
     }
     static load (url: string,  opts?: AudioLoadOptions): Promise<IAudioPlayer> {
         throw new Error('Method not implemented.');
     }
     static async loadNative(url: string, opts?: AudioLoadOptions): Promise<any> {
+        throw new Error('Method not implemented.');
+    }
+    static async playNative(nativeAudio: any): Promise<any> {
         throw new Error('Method not implemented.');
     }
     get loop(): boolean {
@@ -55,5 +58,4 @@ export class AudioPlayerDOM implements IAudioPlayer {
     offEnded(cb?: any) {
         throw new Error('Method not implemented.');
     }
-
 }

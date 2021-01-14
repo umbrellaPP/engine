@@ -20,6 +20,13 @@ export class AudioPlayer implements IAudioPlayer {
         return AudioPlayerWeb.loadNative(url);
     }
 
+    static async playNative(nativeAudio: any): Promise<any> {
+        if (nativeAudio instanceof HTMLAudioElement) {
+            return AudioPlayerDOM.playNative(nativeAudio);
+        }
+        return AudioPlayerWeb.playNative(nativeAudio);
+    }
+
     get loop(): boolean {  return this._player.loop; }
     set loop(val: boolean) { this._player.loop = val; }
     get volume(): number { return this._player.volume; }
