@@ -28,7 +28,7 @@ import removeDeprecatedFeatures from './remove-deprecated-features';
 import { StatsQuery } from './stats-query';
 import { filePathToModuleRequest } from './utils';
 import { assetRef as rpAssetRef, pathToAssetRefURL } from './rollup-plugins/asset-ref';
-import alias from '@rollup/plugin-alias';
+import { palModuleResolve } from './rollup-plugins/pal-module-resolve';
 
 export { ModuleOption, enumerateModuleOptionReps, parseModuleOption };
 
@@ -357,11 +357,8 @@ async function doBuild ({
     }
 
     rollupPlugins.push(
-        alias({
-            entries: {
-                'pal:audio': ps.join(engineRoot, 'pal/audio/web/player.ts'),
-            },
-        }),
+        palModuleResolve(engineRoot),
+        
         rpAssetRef({
             format: options.assetURLFormat,
         }),
