@@ -26,6 +26,12 @@
 
 const { loadInnerAudioContext } = require('./download-audio');
 
+const AudioEvent = {
+    STARTED: 'started',
+    PAUSED: 'paused',
+    STOPPED: 'stopped',
+};
+
 const AudioPlayer = cc.internal.AudioPlayer;
 if (AudioPlayer) {
     const { PlayingState, AudioType } = cc.AudioClip;
@@ -66,62 +72,108 @@ if (AudioPlayer) {
         _volume = 1;
         _loop = false;
 
+        // NOTE: should not call the play() method when the another play operation is executing
+        _playCalling = false;
+
+        _onPlay = null;
+        _onPaused = null;
+        _onStopped = null;
+        _onEnded = null;
+        _onError = null;
+
         constructor (info) {
             super(info);
             this._nativeAudio = info.nativeAudio;
 
-            this._nativeAudio.onPlay(() => {
+            this._onPlay = () => {
                 if (this._state === PlayingState.PLAYING) { return; }
                 this._state = PlayingState.PLAYING;
                 this._startTime = performance.now();
-                this._clip.emit('started');
-            });
-            this._nativeAudio.onPause(() => {
+                this._clip.emit(AudioEvent.STARTED);
+            };
+            this._nativeAudio.onPlay(this._onPlay);
+            this._onPaused = () => {
                 if (this._state === PlayingState.STOPPED) { return; }
                 this._state = PlayingState.STOPPED;
                 this._offset += performance.now() - this._startTime;
-            });
-            this._nativeAudio.onStop(() => {
+                this._clip.emit(AudioEvent.PAUSED);
+            };
+            this._nativeAudio.onPause(this._onPaused);
+            this._onStopped = () => {
                 if (this._state === PlayingState.STOPPED) { return; }
                 this._state = PlayingState.STOPPED;
                 this._offset = 0;
-            });
-            this._nativeAudio.onEnded(() => {
+                this._clip.emit(AudioEvent.STOPPED);
+            };
+            this._nativeAudio.onStop(this._onStopped);
+            this._onEnded = () => {
                 if (this._state === PlayingState.STOPPED) { return; }
                 this._state = PlayingState.STOPPED;
                 this._offset = 0;
                 this._clip.emit('ended');
                 AudioPlayerRuntime._manager.removePlaying(this);
+            };
+            this._nativeAudio.onEnded(this._onEnded);
+            this._onError = (res) => { return console.error(res.errMsg);}
+            this._nativeAudio.onError(this._onError);
+        }
+
+        _ensureStop () {
+            return new Promise((resolve) => {
+                if (this._state === PlayingState.PLAYING) {
+                    /* sometimes there is no way to update the playing state
+                    especially when player unplug earphones and the audio automatically stops
+                    so we need to force updating the playing state by pausing audio */
+                    this.pause().then(() => {
+                        // restart if already playing
+                        this.setCurrentTime(0);
+                        resolve();
+                    });
+                    return;
+                }
+                return resolve();
             });
-            this._nativeAudio.onError(function (res) { return console.error(res.errMsg);});
         }
 
         play () {
-            if (!this._nativeAudio) { return; }
-            if (this._blocking) { this._interrupted = true; return; }
-            if (this._state === PlayingState.PLAYING) {
-                /* sometimes there is no way to update the playing state
-                especially when player unplug earphones and the audio automatically stops
-                so we need to force updating the playing state by pausing audio */
-                this.pause();
-                // restart if already playing
-                this.setCurrentTime(0);
-            }
-            AudioPlayerRuntime._manager.discardOnePlayingIfNeeded();
-            this._nativeAudio.play();
-            AudioPlayerRuntime._manager.addPlaying(this);
+            return new Promise((resolve) => {
+                if (!this._nativeAudio || this._playCalling) { return; }
+                if (this._blocking) { this._interrupted = true; return; }
+                this._playCalling = true;
+                // AudioPlayerRuntime._manager.discardOnePlayingIfNeeded();
+                this._ensureStop().then(() => {
+                    this._clip.once(AudioEvent.STARTED, () => {
+                        AudioPlayerRuntime._manager.addPlaying(this);
+                        console.error('onPlay');
+                        this._playCalling = false;
+                        resolve();
+                    });
+                    console.warn('play');
+                    this._nativeAudio.play();
+                });
+            });
         }
 
         pause () {
-            if (!this._nativeAudio || this._state !== PlayingState.PLAYING) { return; }
-            this._nativeAudio.pause();
-            AudioPlayerRuntime._manager.removePlaying(this._clip);
+            return new Promise((resolve)  => {
+                if (!this._nativeAudio || this._state !== PlayingState.PLAYING) { return resolve(); }
+                this._clip.once(AudioEvent.PAUSED, () => {
+                    AudioPlayerRuntime._manager.removePlaying(this._clip);
+                    resolve();
+                });
+                this._nativeAudio.pause();
+            });
         }
 
         stop () {
-            if (!this._nativeAudio) { return; }
-            this._nativeAudio.stop();
-            AudioPlayerRuntime._manager.removePlaying(this._clip);
+            return new Promise((resolve) => {
+                if (!this._nativeAudio) { return resolve(); }
+                this._clip.once(AudioEvent.STOPPED, () => {
+                    AudioPlayerRuntime._manager.removePlaying(this._clip);
+                    resolve();
+                });
+                this._nativeAudio.stop();
+            });
         }
 
         playOneShot (volume) {
@@ -172,7 +224,30 @@ if (AudioPlayer) {
         }
 
         destroy () {
-            if (this._nativeAudio) { this._nativeAudio.destroy(); }
+            if (!this._nativeAudio) {
+                return;
+            }
+            if (this._onPlay) {
+                this._nativeAudio.offPlay(this._onPlay);
+                delete this._onPlay;
+            }
+            if (this._onPaused) {
+                this._nativeAudio.offPaused(this._onPaused);
+                delete this._onPaused;
+            }
+            if (this._onStopped) {
+                this._nativeAudio.offStop(this._onStopped);
+                delete this._onStopped;
+            }
+            if (this._onEnded) {
+                this._nativeAudio.offEnded(this._onEnded);
+                delete this._onEnded;
+            }
+            if (this._onError) {
+                this._nativeAudio.offError(this._onError);
+                delete this._onError;
+            }
+            this._nativeAudio.destroy();
             super.destroy();
         }
     }
