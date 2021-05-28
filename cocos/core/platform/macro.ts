@@ -38,7 +38,7 @@ const KEY = {
     /**
      * @en None
      * @zh 没有分配
-     * @readonly
+     * @deprecated since v3.3
      */
     none: 0,
 
@@ -46,734 +46,734 @@ const KEY = {
     /**
      * @en The back key
      * @zh 返回键
-     * @readonly
+     * @deprecated since v3.3
      */
     back: 6,
     /**
      * @en The menu key
      * @zh 菜单键
-     * @readonly
+     * @deprecated since v3.3
      */
     menu: 18,
 
     /**
      * @en The backspace key
      * @zh 退格键
-     * @readonly
+     * @deprecated since v3.3
      */
     backspace: 8,
 
     /**
      * @en The tab key
      * @zh Tab 键
-     * @readonly
+     * @deprecated since v3.3
      */
     tab: 9,
 
     /**
      * @en The enter key
      * @zh 回车键
-     * @readonly
+     * @deprecated since v3.3
      */
     enter: 13,
 
     /**
      * @en The shift key
      * @zh Shift 键
-     * @readonly
+     * @deprecated since v3.3
      */
     shift: 16, // should use shiftkey instead
 
     /**
      * @en The ctrl key
      * @zh Ctrl 键
-     * @readonly
+     * @deprecated since v3.3
      */
     ctrl: 17, // should use ctrlkey
 
     /**
      * @en The alt key
      * @zh Alt 键
-     * @readonly
+     * @deprecated since v3.3
      */
     alt: 18, // should use altkey
 
     /**
      * @en The pause key
      * @zh 暂停键
-     * @readonly
+     * @deprecated since v3.3
      */
     pause: 19,
 
     /**
      * @en The caps lock key
      * @zh 大写锁定键
-     * @readonly
+     * @deprecated since v3.3
      */
     capslock: 20,
 
     /**
      * @en The esc key
      * @zh ESC 键
-     * @readonly
+     * @deprecated since v3.3
      */
     escape: 27,
 
     /**
      * @en The space key
      * @zh 空格键
-     * @readonly
+     * @deprecated since v3.3
      */
     space: 32,
 
     /**
      * @en The page up key
      * @zh 向上翻页键
-     * @readonly
+     * @deprecated since v3.3
      */
     pageup: 33,
 
     /**
      * @en The page down key
      * @zh 向下翻页键
-     * @readonly
+     * @deprecated since v3.3
      */
     pagedown: 34,
 
     /**
      * @en The end key
      * @zh 结束键
-     * @readonly
+     * @deprecated since v3.3
      */
     end: 35,
 
     /**
      * @en The home key
      * @zh 主菜单键
-     * @readonly
+     * @deprecated since v3.3
      */
     home: 36,
 
     /**
      * @en The left key
      * @zh 向左箭头键
-     * @readonly
+     * @deprecated since v3.3
      */
     left: 37,
 
     /**
      * @en The up key
      * @zh 向上箭头键
-     * @readonly
+     * @deprecated since v3.3
      */
     up: 38,
 
     /**
      * @en The right key
      * @zh 向右箭头键
-     * @readonly
+     * @deprecated since v3.3
      */
     right: 39,
 
     /**
      * @en The down key
      * @zh 向下箭头键
-     * @readonly
+     * @deprecated since v3.3
      */
     down: 40,
 
     /**
      * @en The select key
      * @zh Select 键
-     * @readonly
+     * @deprecated since v3.3
      */
     select: 41,
 
     /**
      * @en The insert key
      * @zh 插入键
-     * @readonly
+     * @deprecated since v3.3
      */
     insert: 45,
 
     /**
      * @en The Delete key
      * @zh 删除键
-     * @readonly
+     * @deprecated since v3.3
      */
     Delete: 46,
 
     /**
      * @en The '0' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 0 键
-     * @readonly
+     * @deprecated since v3.3
      */
     0: 48,
 
     /**
      * @en The '1' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 1 键
-     * @readonly
+     * @deprecated since v3.3
      */
     1: 49,
 
     /**
      * @en The '2' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 2 键
-     * @readonly
+     * @deprecated since v3.3
      */
     2: 50,
 
     /**
      * @en The '3' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 3 键
-     * @readonly
+     * @deprecated since v3.3
      */
     3: 51,
 
     /**
      * @en The '4' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 4 键
-     * @readonly
+     * @deprecated since v3.3
      */
     4: 52,
 
     /**
      * @en The '5' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 5 键
-     * @readonly
+     * @deprecated since v3.3
      */
     5: 53,
 
     /**
      * @en The '6' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 6 键
-     * @readonly
+     * @deprecated since v3.3
      */
     6: 54,
 
     /**
      * @en The '7' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 7 键
-     * @readonly
+     * @deprecated since v3.3
      */
     7: 55,
 
     /**
      * @en The '8' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 8 键
-     * @readonly
+     * @deprecated since v3.3
      */
     8: 56,
 
     /**
      * @en The '9' key on the top of the alphanumeric keyboard.
      * @zh 字母键盘上的 9 键
-     * @readonly
+     * @deprecated since v3.3
      */
     9: 57,
 
     /**
      * @en The a key
      * @zh A 键
-     * @readonly
+     * @deprecated since v3.3
      */
     a: 65,
 
     /**
      * @en The b key
      * @zh B 键
-     * @readonly
+     * @deprecated since v3.3
      */
     b: 66,
 
     /**
      * @en The c key
      * @zh C 键
-     * @readonly
+     * @deprecated since v3.3
      */
     c: 67,
 
     /**
      * @en The d key
      * @zh D 键
-     * @readonly
+     * @deprecated since v3.3
      */
     d: 68,
 
     /**
      * @en The e key
      * @zh E 键
-     * @readonly
+     * @deprecated since v3.3
      */
     e: 69,
 
     /**
      * @en The f key
      * @zh F 键
-     * @readonly
+     * @deprecated since v3.3
      */
     f: 70,
 
     /**
      * @en The g key
      * @zh G 键
-     * @readonly
+     * @deprecated since v3.3
      */
     g: 71,
 
     /**
      * @en The h key
      * @zh H 键
-     * @readonly
+     * @deprecated since v3.3
      */
     h: 72,
 
     /**
      * @en The i key
      * @zh I 键
-     * @readonly
+     * @deprecated since v3.3
      */
     i: 73,
 
     /**
      * @en The j key
      * @zh J 键
-     * @readonly
+     * @deprecated since v3.3
      */
     j: 74,
 
     /**
      * @en The k key
      * @zh K 键
-     * @readonly
+     * @deprecated since v3.3
      */
     k: 75,
 
     /**
      * @en The l key
      * @zh L 键
-     * @readonly
+     * @deprecated since v3.3
      */
     l: 76,
 
     /**
      * @en The m key
      * @zh M 键
-     * @readonly
+     * @deprecated since v3.3
      */
     m: 77,
 
     /**
      * @en The n key
      * @zh N 键
-     * @readonly
+     * @deprecated since v3.3
      */
     n: 78,
 
     /**
      * @en The o key
      * @zh O 键
-     * @readonly
+     * @deprecated since v3.3
      */
     o: 79,
 
     /**
      * @en The p key
      * @zh P 键
-     * @readonly
+     * @deprecated since v3.3
      */
     p: 80,
 
     /**
      * @en The q key
      * @zh Q 键
-     * @readonly
+     * @deprecated since v3.3
      */
     q: 81,
 
     /**
      * @en The r key
      * @zh R 键
-     * @readonly
+     * @deprecated since v3.3
      */
     r: 82,
 
     /**
      * @en The s key
      * @zh S 键
-     * @readonly
+     * @deprecated since v3.3
      */
     s: 83,
 
     /**
      * @en The t key
      * @zh T 键
-     * @readonly
+     * @deprecated since v3.3
      */
     t: 84,
 
     /**
      * @en The u key
      * @zh U 键
-     * @readonly
+     * @deprecated since v3.3
      */
     u: 85,
 
     /**
      * @en The v key
      * @zh V 键
-     * @readonly
+     * @deprecated since v3.3
      */
     v: 86,
 
     /**
      * @en The w key
      * @zh W 键
-     * @readonly
+     * @deprecated since v3.3
      */
     w: 87,
 
     /**
      * @en The x key
      * @zh X 键
-     * @readonly
+     * @deprecated since v3.3
      */
     x: 88,
 
     /**
      * @en The y key
      * @zh Y 键
-     * @readonly
+     * @deprecated since v3.3
      */
     y: 89,
 
     /**
      * @en The z key
      * @zh Z 键
-     * @readonly
+     * @deprecated since v3.3
      */
     z: 90,
 
     /**
      * @en The numeric keypad 0
      * @zh 数字键盘 0
-     * @readonly
+     * @deprecated since v3.3
      */
     num0: 96,
 
     /**
      * @en The numeric keypad 1
      * @zh 数字键盘 1
-     * @readonly
+     * @deprecated since v3.3
      */
     num1: 97,
 
     /**
      * @en The numeric keypad 2
      * @zh 数字键盘 2
-     * @readonly
+     * @deprecated since v3.3
      */
     num2: 98,
 
     /**
      * @en The numeric keypad 3
      * @zh 数字键盘 3
-     * @readonly
+     * @deprecated since v3.3
      */
     num3: 99,
 
     /**
      * @en The numeric keypad 4
      * @zh 数字键盘 4
-     * @readonly
+     * @deprecated since v3.3
      */
     num4: 100,
 
     /**
      * @en The numeric keypad 5
      * @zh 数字键盘 5
-     * @readonly
+     * @deprecated since v3.3
      */
     num5: 101,
 
     /**
      * @en The numeric keypad 6
      * @zh 数字键盘 6
-     * @readonly
+     * @deprecated since v3.3
      */
     num6: 102,
 
     /**
      * @en The numeric keypad 7
      * @zh 数字键盘 7
-     * @readonly
+     * @deprecated since v3.3
      */
     num7: 103,
 
     /**
      * @en The numeric keypad 8
      * @zh 数字键盘 8
-     * @readonly
+     * @deprecated since v3.3
      */
     num8: 104,
 
     /**
      * @en The numeric keypad 9
      * @zh 数字键盘 9
-     * @readonly
+     * @deprecated since v3.3
      */
     num9: 105,
 
     /**
      * @en The numeric keypad '*'
      * @zh 数字键盘 *
-     * @readonly
+     * @deprecated since v3.3
      */
     '*': 106,
 
     /**
      * @en The numeric keypad '+'
      * @zh 数字键盘 +
-     * @readonly
+     * @deprecated since v3.3
      */
     '+': 107,
 
     /**
      * @en The numeric keypad '-'
      * @zh 数字键盘 -
-     * @readonly
+     * @deprecated since v3.3
      */
     '-': 109,
 
     /**
      * @en The numeric keypad 'delete'
      * @zh 数字键盘删除键
-     * @readonly
+     * @deprecated since v3.3
      */
     numdel: 110,
 
     /**
      * @en The numeric keypad '/'
      * @zh 数字键盘 /
-     * @readonly
+     * @deprecated since v3.3
      */
     '/': 111,
 
     /**
      * @en The F1 function key
      * @zh F1 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f1: 112, // f1-f12 dont work on ie
 
     /**
      * @en The F2 function key
      * @zh F2 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f2: 113,
 
     /**
      * @en The F3 function key
      * @zh F3 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f3: 114,
 
     /**
      * @en The F4 function key
      * @zh F4 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f4: 115,
 
     /**
      * @en The F5 function key
      * @zh F5 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f5: 116,
 
     /**
      * @en The F6 function key
      * @zh F6 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f6: 117,
 
     /**
      * @en The F7 function key
      * @zh F7 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f7: 118,
 
     /**
      * @en The F8 function key
      * @zh F8 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f8: 119,
 
     /**
      * @en The F9 function key
      * @zh F9 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f9: 120,
 
     /**
      * @en The F10 function key
      * @zh F10 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f10: 121,
 
     /**
      * @en The F11 function key
      * @zh F11 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f11: 122,
 
     /**
      * @en The F12 function key
      * @zh F12 功能键
-     * @readonly
+     * @deprecated since v3.3
      */
     f12: 123,
 
     /**
      * @en The numlock key
      * @zh 数字锁定键
-     * @readonly
+     * @deprecated since v3.3
      */
     numlock: 144,
 
     /**
      * @en The scroll lock key
      * @zh 滚动锁定键
-     * @readonly
+     * @deprecated since v3.3
      */
     scrolllock: 145,
 
     /**
      * @en The ';' key.
      * @zh 分号键
-     * @readonly
+     * @deprecated since v3.3
      */
     ';': 186,
 
     /**
      * @en The ';' key.
      * @zh 分号键
-     * @readonly
+     * @deprecated since v3.3
      */
     semicolon: 186,
 
     /**
      * @en The '=' key.
      * @zh 等于号键
-     * @readonly
+     * @deprecated since v3.3
      */
     equal: 187,
 
     /**
      * @en The '=' key.
      * @zh 等于号键
-     * @readonly
+     * @deprecated since v3.3
      */
     '=': 187,
 
     /**
      * @en The ',' key.
      * @zh 逗号键
-     * @readonly
+     * @deprecated since v3.3
      */
     ',': 188,
 
     /**
      * @en The ',' key.
      * @zh 逗号键
-     * @readonly
+     * @deprecated since v3.3
      */
     comma: 188,
 
     /**
      * @en The dash '-' key.
      * @zh 中划线键
-     * @readonly
+     * @deprecated since v3.3
      */
     dash: 189,
 
     /**
      * @en The '.' key.
      * @zh 句号键
-     * @readonly
+     * @deprecated since v3.3
      */
     '.': 190,
 
     /**
      * @en The '.' key
      * @zh 句号键
-     * @readonly
+     * @deprecated since v3.3
      */
     period: 190,
 
     /**
      * @en The forward slash key
      * @zh 正斜杠键
-     * @readonly
+     * @deprecated since v3.3
      */
     forwardslash: 191,
 
     /**
      * @en The grave key
      * @zh 按键 `
-     * @readonly
+     * @deprecated since v3.3
      */
     grave: 192,
 
     /**
      * @en The '[' key
      * @zh 按键 [
-     * @readonly
+     * @deprecated since v3.3
      */
     '[': 219,
 
     /**
      * @en The '[' key
      * @zh 按键 [
-     * @readonly
+     * @deprecated since v3.3
      */
     openbracket: 219,
 
     /**
      * @en The '\' key
      * @zh 反斜杠键
-     * @readonly
+     * @deprecated since v3.3
      */
     backslash: 220,
 
     /**
      * @en The ']' key
      * @zh 按键 ]
-     * @readonly
+     * @deprecated since v3.3
      */
     ']': 221,
 
     /**
      * @en The ']' key
      * @zh 按键 ]
-     * @readonly
+     * @deprecated since v3.3
      */
     closebracket: 221,
 
     /**
      * @en The quote key
      * @zh 单引号键
-     * @readonly
+     * @deprecated since v3.3
      */
     quote: 222,
 
@@ -782,35 +782,35 @@ const KEY = {
     /**
      * @en The dpad left key
      * @zh 导航键 向左
-     * @readonly
+     * @deprecated since v3.3
      */
     dpadLeft: 1000,
 
     /**
      * @en The dpad right key
      * @zh 导航键 向右
-     * @readonly
+     * @deprecated since v3.3
      */
     dpadRight: 1001,
 
     /**
      * @en The dpad up key
      * @zh 导航键 向上
-     * @readonly
+     * @deprecated since v3.3
      */
     dpadUp: 1003,
 
     /**
      * @en The dpad down key
      * @zh 导航键 向下
-     * @readonly
+     * @deprecated since v3.3
      */
     dpadDown: 1004,
 
     /**
      * @en The dpad center key
      * @zh 导航键 确定键
-     * @readonly
+     * @deprecated since v3.3
      */
     dpadCenter: 1005,
 };
@@ -836,6 +836,7 @@ const macro = {
      * @en Key map for keyboard event
      * @zh 键盘事件的按键值。
      * @example {@link cocos/core/platform/CCCommon/KEY.js}
+     * @deprecated since v3.3 please use SystemEvent.Keyboard instead
      */
     KEY,
 
