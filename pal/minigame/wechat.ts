@@ -1,6 +1,6 @@
 import { IMiniGame, SystemInfo } from 'pal/minigame';
 import { Orientation } from '../system/enum-type/orientation';
-import { cloneObject, createInnerAudioContextPolyfill } from '../utils';
+import { cloneObject } from '../utils';
 
 declare let wx: any;
 
@@ -105,14 +105,6 @@ minigame.startAccelerometer = function (res: any) {
 };
 // #endregion Accelerometer
 
-minigame.createInnerAudioContext = createInnerAudioContextPolyfill(wx, {
-    onPlay: true,
-    onPause: true,
-    onStop: true,
-    onSeek: false,
-});
-
-// #region SafeArea
 // FIX_ME: wrong safe area when orientation is landscape left
 minigame.getSafeArea = function () {
     const locSystemInfo = wx.getSystemInfoSync() as SystemInfo;

@@ -1,6 +1,6 @@
 import { IMiniGame, SystemInfo } from 'pal/minigame';
 import { Orientation } from '../system/enum-type/orientation';
-import { cloneObject, createInnerAudioContextPolyfill } from '../utils';
+import { cloneObject } from '../utils';
 
 declare let tt: any;
 
@@ -67,15 +67,6 @@ minigame.startAccelerometer = function (res: any) {
 };
 // #endregion Accelerometer
 
-minigame.createInnerAudioContext = createInnerAudioContextPolyfill(tt, {
-    onPlay: true,
-    onPause: true,
-    onStop: true,
-    onSeek: true,
-});
-
-// #region SafeArea
-// FIX_ME: wrong safe area when orientation is landscape left
 minigame.getSafeArea = function () {
     const locSystemInfo = tt.getSystemInfoSync() as SystemInfo;
     let { top, left, right } = locSystemInfo.safeArea;

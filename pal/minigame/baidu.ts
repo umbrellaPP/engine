@@ -1,6 +1,6 @@
 import { IMiniGame } from 'pal/minigame';
 import { Orientation } from '../system/enum-type/orientation';
-import { cloneObject, createInnerAudioContextPolyfill } from '../utils';
+import { cloneObject } from '../utils';
 
 declare let swan: any;
 
@@ -65,14 +65,6 @@ minigame.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
 };
 // #endregion Accelerometer
 
-minigame.createInnerAudioContext = createInnerAudioContextPolyfill(swan, {
-    onPlay: true,
-    onPause: true,
-    onStop: true,
-    onSeek: false,
-});
-
-// #region SafeArea
 minigame.getSafeArea = function () {
     console.warn('getSafeArea is not supported on this platform');
     const systemInfo =  minigame.getSystemInfoSync();

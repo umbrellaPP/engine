@@ -2,7 +2,7 @@ import { COCOSPLAY, HUAWEI, LINKSURE, OPPO, QTT, VIVO } from 'internal:constants
 import { SystemInfo, IMiniGame } from 'pal/minigame';
 
 import { Orientation } from '../system/enum-type/orientation';
-import { cloneObject, createInnerAudioContextPolyfill } from '../utils';
+import { cloneObject } from '../utils';
 
 declare let ral: any;
 
@@ -81,12 +81,43 @@ minigame.onAccelerometerChange = function (cb) {
 };
 // #endregion Accelerometer
 
-minigame.createInnerAudioContext = createInnerAudioContextPolyfill(ral, {
-    onPlay: true,  // polyfill for vivo
-    onPause: true,
-    onStop: true,
-    onSeek: true,
-});
+minigame.createInnerAudioContext = function (): InnerAudioContext {
+    const audioContext: InnerAudioContext = ral.createInnerAudioContext();
+
+    // HACK: onSeeked method doesn't work on runtime
+    const originalSeek = audioContext.seek;
+    let _onSeekCB: (()=> void) | null = null;
+    audioContext.onSeeked = function (cb: ()=> void) {
+        _onSeekCB = cb;
+    };
+    audioContext.seek = function (time: number) {
+        originalSeek.call(audioContext, time);
+        _onSeekCB?.();
+    };
+
+    // HACK: onPause method doesn't work on runtime
+    const originalPause = audioContext.pause;
+    let _onPauseCB: (()=> void) | null = null;
+    audioContext.onPause = function (cb: ()=> void) {
+        _onPauseCB = cb;
+    };
+    audioContext.pause = function () {
+        originalPause.call(audioContext);
+        _onPauseCB?.();
+    };
+
+    // HACK: onStop method doesn't work on runtime
+    const originalStop = audioContext.stop;
+    let _onStopCB: (()=> void) | null = null;
+    audioContext.onStop = function (cb: ()=> void) {
+        _onStopCB = cb;
+    };
+    audioContext.stop = function () {
+        originalStop.call(audioContext);
+        _onStopCB?.();
+    };
+    return audioContext;
+};
 
 // #region SafeArea
 minigame.getSafeArea = function () {

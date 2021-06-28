@@ -48,18 +48,8 @@ function handleZip(url, options, onComplete) {
     }
 }
 
-function loadAudioPlayer (url, options, onComplete) {
-    cc.AudioPlayer.load(url).then(player => {
-        const audioMeta = {
-            url,
-            duration: player.duration,
-            type: player.type,
-        };
-        player.destroy();
-        onComplete(null, audioMeta);
-    }).catch(err => {
-        onComplete(err);
-    });
+function downloadDomAudio(url, options, onComplete) {
+    onComplete(null, url);
 }
 
 function download(url, func, options, onFileProgress, onComplete) {
@@ -252,6 +242,7 @@ let parsePlist = function (url, options, onComplete) {
     });
 };
 
+downloader.downloadDomAudio = downloadDomAudio;
 downloader.downloadScript = downloadScript;
 parser.parsePVRTex = parsePVRTex;
 parser.parsePKMTex = parsePKMTex;
@@ -343,10 +334,10 @@ parser.register({
     '.ttc': loadFont,
 
     // Audio
-    '.mp3': loadAudioPlayer,
-    '.ogg': loadAudioPlayer,
-    '.wav': loadAudioPlayer,
-    '.m4a': loadAudioPlayer,
+    '.mp3': downloadDomAudio,
+    '.ogg': downloadDomAudio,
+    '.wav': downloadDomAudio,
+    '.m4a': downloadDomAudio,
 
     // Txt
     '.txt': parseText,
