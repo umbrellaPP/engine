@@ -146,7 +146,7 @@ export class AudioPlayerWeb implements OperationQueueable {
     private _volume = 1;
     private _loop = false;
     private _startTime = 0;
-    private _playTimeOffset = 0;
+    private _offset = 0;
     private _state: AudioState = AudioState.INIT;
 
     // NOTE: the implemented interface properties need to be public access
@@ -263,39 +263,34 @@ export class AudioPlayerWeb implements OperationQueueable {
         return this._audioBuffer.duration;
     }
     get currentTime (): number {
-        if (this._state !== AudioState.PLAYING) { return this._playTimeOffset; }
-        return (audioContextAgent!.currentTime - this._startTime + this._playTimeOffset) % this._audioBuffer.duration;
+        if (this._state !== AudioState.PLAYING) { return this._offset; }
+        return (audioContextAgent!.currentTime - this._startTime + this._offset) % this._audioBuffer.duration;
     }
 
     @enqueueOperation
     seek (time: number): Promise<void> {
         return new Promise((resolve) => {
-            this._playTimeOffset = clamp(time, 0, this._audioBuffer.duration);
+            this._offset = clamp(time, 0, this._audioBuffer.duration);
             if (this._state === AudioState.PLAYING) {
-                // one AudioBufferSourceNode can't start twice
-                // need to create a new one to start from the offset
-                this._doPlay().then(resolve).catch((e) => {});
-            } else {
-                resolve();
+                this.stop().then(() => {
+                    this.play().catch((e) => {});
+                }).catch((e) => {});
+                this.play().catch((e) => {});
             }
+            resolve();
         });
     }
 
     @enqueueOperation
     play (): Promise<void> {
-        return this._doPlay();
-    }
-
-    // The decorated play() method can't be call in seek()
-    // so we define this method to ensure that the audio seeking works.
-    _doPlay (): Promise<void> {
         return new Promise((resolve) => {
             audioContextAgent!.runContext().then(() => {
                 // one AudioBufferSourceNode can't start twice
                 this._sourceNode?.stop();
                 this._sourceNode = audioContextAgent!.createBufferSource(this._audioBuffer, this.loop);
                 this._sourceNode.connect(this._gainNode);
-                this._sourceNode.start(0, this._playTimeOffset);
+                this._sourceNode.start(0, this._offset);
+
                 this._state = AudioState.PLAYING;
                 this._startTime = audioContextAgent!.currentTime;
 
@@ -303,17 +298,18 @@ export class AudioPlayerWeb implements OperationQueueable {
                 this._sourceNode.onended = this._onEnded;
                 /* doing it manually for now */
                 const checkEnded = () => {
-                    this._playTimeOffset = 0;
-                    this._startTime = audioContextAgent!.currentTime;
                     if (this.loop) {
-                        this._currentTimer = window.setTimeout(checkEnded, this._audioBuffer.duration * 1000);
+                        this._currentTimer = window.setInterval(checkEnded, this._audioBuffer.duration * 1000);
                     } else {  // do ended
                         this._eventTarget.emit(AudioEvent.ENDED);
+                        clearInterval(this._currentTimer);
+                        this._offset = 0;
+                        this._startTime = audioContextAgent!.currentTime;
                         this._state = AudioState.INIT;
                     }
                 };
-                clearTimeout(this._currentTimer);
-                this._currentTimer = window.setTimeout(checkEnded, (this._audioBuffer.duration - this._playTimeOffset) * 1000);
+                clearInterval(this._currentTimer);
+                this._currentTimer = window.setInterval(checkEnded, (this._audioBuffer.duration - this._offset) * 1000);
                 resolve();
             }).catch((e) => {});
         });
@@ -324,9 +320,9 @@ export class AudioPlayerWeb implements OperationQueueable {
         if (this._state !== AudioState.PLAYING || !this._sourceNode) {
             return Promise.resolve();
         }
-        this._playTimeOffset = (audioContextAgent!.currentTime - this._startTime + this._playTimeOffset) % this._audioBuffer.duration;
+        this._offset += audioContextAgent!.currentTime - this._startTime;
         this._state = AudioState.PAUSED;
-        clearTimeout(this._currentTimer);
+        clearInterval(this._currentTimer);
         this._sourceNode.stop();
         return Promise.resolve();
     }
@@ -336,9 +332,9 @@ export class AudioPlayerWeb implements OperationQueueable {
         if (!this._sourceNode) {
             return Promise.resolve();
         }
-        this._playTimeOffset = 0;
+        this._offset = 0;
         this._state = AudioState.STOPPED;
-        clearTimeout(this._currentTimer);
+        clearInterval(this._currentTimer);
         this._sourceNode.stop();
         return Promise.resolve();
     }
