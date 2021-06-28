@@ -4,15 +4,15 @@ import { cloneObject } from '../utils';
 
 declare let tt: any;
 
-// @ts-expect-error can't init minigame when it's declared
-const minigame: IMiniGame = {};
-cloneObject(minigame, tt);
+// @ts-expect-error can't init mg when it's declared
+const mg: IMiniGame = {};
+cloneObject(mg, tt);
 
 // #region SystemInfo
-const systemInfo = minigame.getSystemInfoSync();
-minigame.isDevTool = (systemInfo.platform === 'devtools');
+const systemInfo = mg.getSystemInfoSync();
+mg.isDevTool = (systemInfo.platform === 'devtools');
 
-minigame.isLandscape = systemInfo.screenWidth > systemInfo.screenHeight;
+mg.isLandscape = systemInfo.screenWidth > systemInfo.screenHeight;
 // init landscapeOrientation as LANDSCAPE_RIGHT
 let landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
 tt.onDeviceOrientationChange((res) => {
@@ -22,23 +22,23 @@ tt.onDeviceOrientationChange((res) => {
         landscapeOrientation = Orientation.LANDSCAPE_LEFT;
     }
 });
-Object.defineProperty(minigame, 'orientation', {
+Object.defineProperty(mg, 'orientation', {
     get () {
-        return minigame.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
+        return mg.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
     },
 });
 // #endregion SystemInfo
 
 // #region Accelerometer
 let _accelerometerCb: AccelerometerChangeCallback | undefined;
-minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
-    minigame.offAccelerometerChange();
+mg.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
+    mg.offAccelerometerChange();
     // onAccelerometerChange would start accelerometer
     // so we won't call this method here
     _accelerometerCb = (res: any) => {
         let x = res.x;
         let y = res.y;
-        if (minigame.isLandscape) {
+        if (mg.isLandscape) {
             const orientationFactor = (landscapeOrientation === Orientation.LANDSCAPE_RIGHT ? 1 : -1);
             const tmp = x;
             x = -y * orientationFactor;
@@ -53,13 +53,13 @@ minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
         cb(resClone);
     };
 };
-minigame.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
+mg.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
     if (_accelerometerCb) {
         tt.offAccelerometerChange(_accelerometerCb);
         _accelerometerCb = undefined;
     }
 };
-minigame.startAccelerometer = function (res: any) {
+mg.startAccelerometer = function (res: any) {
     if (_accelerometerCb) {
         tt.onAccelerometerChange(_accelerometerCb);
     }
@@ -67,12 +67,12 @@ minigame.startAccelerometer = function (res: any) {
 };
 // #endregion Accelerometer
 
-minigame.getSafeArea = function () {
+mg.getSafeArea = function () {
     const locSystemInfo = tt.getSystemInfoSync() as SystemInfo;
     let { top, left, right } = locSystemInfo.safeArea;
     const { bottom, width, height } = locSystemInfo.safeArea;
     // HACK: on iOS device, the orientation should mannually rotate
-    if (locSystemInfo.platform === 'ios' && !minigame.isDevTool && minigame.isLandscape) {
+    if (locSystemInfo.platform === 'ios' && !mg.isDevTool && mg.isLandscape) {
         const tmpTop = top; const tmpLeft = left; const tmpBottom = bottom; const tmpRight = right; const tmpWidth = width; const tmpHeight = height;
         top = tmpLeft;
         left = tmpTop;
@@ -82,4 +82,4 @@ minigame.getSafeArea = function () {
 };
 // #endregion SafeArea
 
-export { minigame };
+export { mg };

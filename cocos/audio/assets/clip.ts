@@ -28,18 +28,13 @@
  * @module component/audio
  */
 
+import { AudioPlayer } from 'pal/audio';
 import {
     ccclass, type, serializable, override,
 } from 'cc.decorator';
-import { Asset } from '../core/assets/asset';
-import { legacyCC } from '../core/global-exports';
-import { AudioType } from '../../pal/audio/type';
-
-export interface AudioMeta {
-    url: string;
-    type: AudioType;
-    duration: number;
-}
+import { Asset } from '../../core/assets/asset';
+import { legacyCC } from '../../core/global-exports';
+import { AudioType } from '../../../pal/audio/type';
 
 /**
  * @en
@@ -62,21 +57,26 @@ export class AudioClip extends Asset {
 
     protected _loadMode = AudioType.UNKNOWN_AUDIO;
 
-    protected _meta: AudioMeta | null = null;
+    protected _player: AudioPlayer | null = null;
 
     constructor () {
         super();
         this.loaded = false;
     }
 
-    set _nativeAsset (meta: AudioMeta | null) {
-        this._meta = meta;
-        if (meta) {
+    public destroy () {
+        if (this._player) { this._player.destroy(); }
+        return super.destroy();
+    }
+
+    set _nativeAsset (player: AudioPlayer | null) {
+        this._player = player;
+        if (player) {
             this.loaded = true;
-            this._loadMode = meta.type;
+            this._loadMode = player.type;
             this.emit('load');
         } else {
-            this._meta = null;
+            this._player = null;
             this._loadMode = AudioType.UNKNOWN_AUDIO;
             this._duration = 0;
             this.loaded = false;
@@ -84,7 +84,7 @@ export class AudioClip extends Asset {
     }
 
     get _nativeAsset () {
-        return this._meta;
+        return this._player;
     }
 
     @override
@@ -101,11 +101,7 @@ export class AudioClip extends Asset {
         return this._loadMode;
     }
 
-    public validate () {
-        return !!this._meta;
-    }
-
-    public getDuration () { return this._meta ? this._meta.duration : this._duration; }
+    public getDuration () { return this._player ? this._player.duration : this._duration; }
 }
 
 legacyCC.AudioClip = AudioClip;

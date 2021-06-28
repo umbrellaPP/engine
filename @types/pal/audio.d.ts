@@ -56,13 +56,9 @@ declare module 'pal/audio' {
         static readonly maxAudioChannel: number;
 
         /**
-         * Readonly property to get the url of audio src.
-         */
-        get src (): string;
-
-        /**
          * The type of this player.
          * For WEB platform, it can be `WEB_AUDIO` or `DOM_AUDIO`.
+         * type of AudioPlayer，there are WEB_AUDIO and DOM_AUDIO for web platform
          */
         get type (): import('pal/audio/type').AudioType;
 

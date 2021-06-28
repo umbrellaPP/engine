@@ -6,21 +6,21 @@ import { cloneObject } from '../utils';
 
 declare let ral: any;
 
-// @ts-expect-error can't init minigame when it's declared
-const minigame: IMiniGame = {};
-cloneObject(minigame, ral);
+// @ts-expect-error can't init mg when it's declared
+const mg: IMiniGame = {};
+cloneObject(mg, ral);
 
 // #region SystemInfo
-const systemInfo = minigame.getSystemInfoSync();
-minigame.isDevTool = (systemInfo.platform === 'devtools');
+const systemInfo = mg.getSystemInfoSync();
+mg.isDevTool = (systemInfo.platform === 'devtools');
 
 // NOTE: size and orientation info is wrong at the init phase, need to define as a getter
-Object.defineProperty(minigame, 'isLandscape', {
+Object.defineProperty(mg, 'isLandscape', {
     get () {
         if (VIVO) {
             return systemInfo.screenWidth > systemInfo.screenHeight;
         } else {
-            const locSysInfo = minigame.getSystemInfoSync();
+            const locSysInfo = mg.getSystemInfoSync();
             return locSysInfo.screenWidth > locSysInfo.screenHeight;
         }
     },
@@ -35,15 +35,15 @@ const landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
 //         landscapeOrientation = Orientation.LANDSCAPE_LEFT;
 //     }
 // });
-Object.defineProperty(minigame, 'orientation', {
+Object.defineProperty(mg, 'orientation', {
     get () {
-        return minigame.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
+        return mg.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
     },
 });
 
 if (VIVO) {
     // TODO: need to be handled in ral lib.
-    minigame.getSystemInfoSync = function () {
+    mg.getSystemInfoSync = function () {
         const sys = ral.getSystemInfoSync() as SystemInfo;
         // on VIVO, windowWidth should be windowHeight when it is landscape
         sys.windowWidth = sys.screenWidth;
@@ -53,18 +53,18 @@ if (VIVO) {
 } else if (LINKSURE) {
     // TODO: update system info when view resized, currently the resize callback is not supported.
     const cachedSystemInfo = ral.getSystemInfoSync() as SystemInfo;
-    minigame.getSystemInfoSync = function () {
+    mg.getSystemInfoSync = function () {
         return cachedSystemInfo;
     };
 }
 // #endregion SystemInfo
 
 // #region Accelerometer
-minigame.onAccelerometerChange = function (cb) {
+mg.onAccelerometerChange = function (cb) {
     ral.onAccelerometerChange((res) => {
         let x = res.x;
         let y = res.y;
-        if (minigame.isLandscape) {
+        if (mg.isLandscape) {
             const orientationFactor = landscapeOrientation === Orientation.LANDSCAPE_RIGHT ? 1 : -1;
             const tmp = x;
             x = -y * orientationFactor;
@@ -81,7 +81,7 @@ minigame.onAccelerometerChange = function (cb) {
 };
 // #endregion Accelerometer
 
-minigame.createInnerAudioContext = function (): InnerAudioContext {
+mg.createInnerAudioContext = function (): InnerAudioContext {
     const audioContext: InnerAudioContext = ral.createInnerAudioContext();
 
     // HACK: onSeeked method doesn't work on runtime
@@ -120,13 +120,13 @@ minigame.createInnerAudioContext = function (): InnerAudioContext {
 };
 
 // #region SafeArea
-minigame.getSafeArea = function () {
+mg.getSafeArea = function () {
     const locSystemInfo = ral.getSystemInfoSync() as SystemInfo;
     if (locSystemInfo.safeArea) {
         return locSystemInfo.safeArea;
     } else {
         console.warn('getSafeArea is not supported on this platform');
-        const systemInfo =  minigame.getSystemInfoSync();
+        const systemInfo =  mg.getSystemInfoSync();
         return {
             top: 0,
             left: 0,
@@ -139,4 +139,4 @@ minigame.getSafeArea = function () {
 };
 // #endregion SafeArea
 
-export { minigame };
+export { mg };

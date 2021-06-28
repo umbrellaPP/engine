@@ -1,13 +1,13 @@
-import { minigame } from 'pal/minigame';
+import { mg } from 'pal/minigame';
 import { OneShotAudio } from 'pal/audio';
 import { legacyCC } from '../../../cocos/core/global-exports';
 import { EventTarget } from '../../../cocos/core/event/event-target';
 import { AudioEvent, AudioState, AudioType } from '../type';
 import { clamp, clamp01 } from '../../../cocos/core';
-import { enqueueOperation, OperationInfo, OperationQueueable } from '../operation-queue';
 
-export class AudioPlayer implements OperationQueueable {
+export class AudioPlayer {
     private _innerAudioContext: any;
+    private _eventTarget: EventTarget;
     private _state: AudioState = AudioState.INIT;
 
     private _onHide?: () => void;
@@ -18,10 +18,6 @@ export class AudioPlayer implements OperationQueueable {
     private _onStop: () => void;
     private _onSeeked: () => void;
     private _onEnded: () => void;
-
-    // NOTE: the implemented interface properties need to be public access
-    public _eventTarget: EventTarget = new EventTarget();
-    public _operationQueue: OperationInfo[] = [];
 
     constructor (innerAudioContext: any) {
         this._innerAudioContext = innerAudioContext;
@@ -93,9 +89,6 @@ export class AudioPlayer implements OperationQueueable {
         }
     }
 
-    get src () {
-        return this._innerAudioContext ? <string> this._innerAudioContext.src : '';
-    }
     get type (): AudioType {
         return AudioType.MINIGAME_AUDIO;
     }
@@ -108,7 +101,7 @@ export class AudioPlayer implements OperationQueueable {
     }
     static loadNative (url: string): Promise<unknown> {
         return new Promise((resolve, reject) => {
-            const innerAudioContext = minigame.createInnerAudioContext();
+            const innerAudioContext = mg.createInnerAudioContext();
             const timer = setTimeout(() => {
                 clearEvent();
                 resolve(innerAudioContext);
@@ -157,8 +150,6 @@ export class AudioPlayer implements OperationQueueable {
     get currentTime (): number {
         return this._innerAudioContext.currentTime as number;
     }
-
-    @enqueueOperation
     seek (time: number): Promise<void> {
         return new Promise((resolve) => {
             time = clamp(time, 0, this.duration);
@@ -194,23 +185,33 @@ export class AudioPlayer implements OperationQueueable {
         return oneShotAudio;
     }
 
-    @enqueueOperation
-    play (): Promise<void> {
+    private _ensureStop (): Promise<void> {
         return new Promise((resolve) => {
-            this._eventTarget.once(AudioEvent.PLAYED, resolve);
-            this._innerAudioContext.play();
+            /* sometimes there is no way to update the playing state
+            especially when player unplug earphones and the audio automatically stops
+            so we need to force updating the playing state by pausing audio */
+            if (this._state === AudioState.PLAYING) {
+                this.stop().then(resolve).catch((e) => {});
+            } else {
+                resolve();
+            }
         });
     }
 
-    @enqueueOperation
+    play (): Promise<void> {
+        return new Promise((resolve) => {
+            this._ensureStop().then(() => {
+                this._eventTarget.once(AudioEvent.PLAYED, resolve);
+                this._innerAudioContext.play();
+            }).catch((e) => {});
+        });
+    }
     pause (): Promise<void> {
         return new Promise((resolve) => {
             this._eventTarget.once(AudioEvent.PAUSED, resolve);
             this._innerAudioContext.pause();
         });
     }
-
-    @enqueueOperation
     stop (): Promise<void> {
         return new Promise((resolve) => {
             this._eventTarget.once(AudioEvent.STOPPED, resolve);

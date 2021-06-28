@@ -4,15 +4,15 @@ import { cloneObject } from '../utils';
 
 declare let swan: any;
 
-// @ts-expect-error can't init minigame when it's declared
-const minigame: IMiniGame = {};
-cloneObject(minigame, swan);
+// @ts-expect-error can't init mg when it's declared
+const mg: IMiniGame = {};
+cloneObject(mg, swan);
 
 // #region SystemInfo
-const systemInfo = minigame.getSystemInfoSync();
-minigame.isDevTool = systemInfo.platform === 'devtools';
+const systemInfo = mg.getSystemInfoSync();
+mg.isDevTool = systemInfo.platform === 'devtools';
 
-minigame.isLandscape = systemInfo.screenWidth > systemInfo.screenHeight;
+mg.isLandscape = systemInfo.screenWidth > systemInfo.screenHeight;
 // init landscapeOrientation as LANDSCAPE_RIGHT
 let landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
 swan.onDeviceOrientationChange((res) => {
@@ -22,9 +22,9 @@ swan.onDeviceOrientationChange((res) => {
         landscapeOrientation = Orientation.LANDSCAPE_LEFT;
     }
 });
-Object.defineProperty(minigame, 'orientation', {
+Object.defineProperty(mg, 'orientation', {
     get () {
-        return minigame.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
+        return mg.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
     },
 });
 // #endregion SystemInfo
@@ -32,14 +32,14 @@ Object.defineProperty(minigame, 'orientation', {
 // #region Accelerometer
 let _customAccelerometerCb: AccelerometerChangeCallback | undefined;
 let _innerAccelerometerCb: AccelerometerChangeCallback | undefined;
-minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
+mg.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
     // swan.offAccelerometerChange() is not supported.
     // so we can only register AccelerometerChange callback, but can't unregister.
     if (!_innerAccelerometerCb) {
         _innerAccelerometerCb = (res: any) => {
             let x = res.x;
             let y = res.y;
-            if (minigame.isLandscape) {
+            if (mg.isLandscape) {
                 const orientationFactor = (landscapeOrientation === Orientation.LANDSCAPE_RIGHT ? 1 : -1);
                 const tmp = x;
                 x = -y * orientationFactor;
@@ -59,15 +59,15 @@ minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
     }
     _customAccelerometerCb = cb;
 };
-minigame.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
+mg.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
     // swan.offAccelerometerChange() is not supported.
     _customAccelerometerCb = undefined;
 };
 // #endregion Accelerometer
 
-minigame.getSafeArea = function () {
+mg.getSafeArea = function () {
     console.warn('getSafeArea is not supported on this platform');
-    const systemInfo =  minigame.getSystemInfoSync();
+    const systemInfo =  mg.getSystemInfoSync();
     return {
         top: 0,
         left: 0,
@@ -79,4 +79,4 @@ minigame.getSafeArea = function () {
 };
 // #endregion SafeArea
 
-export { minigame };
+export { mg };

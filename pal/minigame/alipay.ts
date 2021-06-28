@@ -4,15 +4,15 @@ import { cloneObject } from '../utils';
 
 declare let my: any;
 
-// @ts-expect-error can't init minigame when it's declared
-const minigame: IMiniGame = {};
-cloneObject(minigame, my);
+// @ts-expect-error can't init mg when it's declared
+const mg: IMiniGame = {};
+cloneObject(mg, my);
 
 // #region SystemInfo
-const systemInfo = minigame.getSystemInfoSync();
-minigame.isDevTool = window.navigator && (/AlipayIDE/.test(window.navigator.userAgent));
+const systemInfo = mg.getSystemInfoSync();
+mg.isDevTool = window.navigator && (/AlipayIDE/.test(window.navigator.userAgent));
 
-minigame.isLandscape = systemInfo.screenWidth > systemInfo.screenHeight;
+mg.isLandscape = systemInfo.screenWidth > systemInfo.screenHeight;
 // init landscapeOrientation as LANDSCAPE_RIGHT
 const landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
 // NOTE: onDeviceOrientationChange is not supported on this platform
@@ -23,9 +23,9 @@ const landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
 //         landscapeOrientation = Orientation.LANDSCAPE_LEFT;
 //     }
 // });
-Object.defineProperty(minigame, 'orientation', {
+Object.defineProperty(mg, 'orientation', {
     get () {
-        return minigame.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
+        return mg.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
     },
 });
 // #endregion SystemInfo
@@ -33,29 +33,29 @@ Object.defineProperty(minigame, 'orientation', {
 // #region TouchEvent
 // my.onTouchStart register touch event listner on body
 // need to register on canvas
-minigame.onTouchStart = function (cb) {
+mg.onTouchStart = function (cb) {
     window.canvas.addEventListener('touchstart', (res) => {
         cb && cb(res);
     });
 };
-minigame.onTouchMove = function (cb) {
+mg.onTouchMove = function (cb) {
     window.canvas.addEventListener('touchmove', (res) => {
         cb && cb(res);
     });
 };
-minigame.onTouchEnd = function (cb) {
+mg.onTouchEnd = function (cb) {
     window.canvas.addEventListener('touchend', (res) => {
         cb && cb(res);
     });
 };
-minigame.onTouchCancel = function (cb) {
+mg.onTouchCancel = function (cb) {
     window.canvas.addEventListener('touchcancel', (res) => {
         cb && cb(res);
     });
 };
 // #endregion TouchEvent
 
-minigame.createInnerAudioContext = function (): InnerAudioContext {
+mg.createInnerAudioContext = function (): InnerAudioContext {
     const audio: InnerAudioContext = my.createInnerAudioContext();
     // @ts-expect-error InnerAudioContext has onCanPlay
     audio.onCanplay = audio.onCanPlay.bind(audio);
@@ -68,8 +68,7 @@ minigame.createInnerAudioContext = function (): InnerAudioContext {
     return audio;
 };
 
-// #region Font
-minigame.loadFont = function (url) {
+mg.loadFont = function (url) {
     // my.loadFont crash when url is not in user data path
     return 'Arial';
 };
@@ -77,14 +76,14 @@ minigame.loadFont = function (url) {
 
 // #region Accelerometer
 let _accelerometerCb: AccelerometerChangeCallback | undefined;
-minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
-    minigame.offAccelerometerChange();
+mg.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
+    mg.offAccelerometerChange();
     // onAccelerometerChange would start accelerometer
     // so we won't call this method here
     _accelerometerCb = (res: any) => {
         let x = res.x;
         let y = res.y;
-        if (minigame.isLandscape) {
+        if (mg.isLandscape) {
             const orientationFactor = (landscapeOrientation === Orientation.LANDSCAPE_RIGHT ? 1 : -1);
             const tmp = x;
             x = -y * orientationFactor;
@@ -99,30 +98,30 @@ minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
         cb(resClone);
     };
 };
-minigame.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
+mg.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
     if (_accelerometerCb) {
         my.offAccelerometerChange(_accelerometerCb);
         _accelerometerCb = undefined;
     }
 };
-minigame.startAccelerometer = function (res: any) {
+mg.startAccelerometer = function (res: any) {
     if (_accelerometerCb) {
         my.onAccelerometerChange(_accelerometerCb);
     } else {
         // my.startAccelerometer() is not implemented.
-        console.error('minigame.onAccelerometerChange() should be invoked before minigame.startAccelerometer() on alipay platform');
+        console.error('mg.onAccelerometerChange() should be invoked before mg.startAccelerometer() on alipay platform');
     }
 };
-minigame.stopAccelerometer = function (res: any) {
+mg.stopAccelerometer = function (res: any) {
     // my.stopAccelerometer() is not implemented.
-    minigame.offAccelerometerChange();
+    mg.offAccelerometerChange();
 };
 // #endregion Accelerometer
 
 // #region SafeArea
-minigame.getSafeArea = function () {
+mg.getSafeArea = function () {
     console.warn('getSafeArea is not supported on this platform');
-    const systemInfo =  minigame.getSystemInfoSync();
+    const systemInfo =  mg.getSystemInfoSync();
     return {
         top: 0,
         left: 0,
@@ -134,4 +133,4 @@ minigame.getSafeArea = function () {
 };
 // #endregion SafeArea
 
-export { minigame };
+export { mg };

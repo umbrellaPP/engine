@@ -1,26 +1,22 @@
-import { OneShotAudio } from 'pal/audio';
+import { AudioPlayer as IAudioPlayer, OneShotAudio } from 'pal/audio';
 import { AudioType, AudioState, AudioEvent } from '../type';
 import { EventTarget } from '../../../cocos/core/event/event-target';
 import { legacyCC } from '../../../cocos/core/global-exports';
 import { clamp, clamp01 } from '../../../cocos/core';
-import { enqueueOperation, OperationInfo, OperationQueueable } from '../operation-queue';
 
 const urlCount: Record<string, number> = {};
 const audioEngine = jsb.AudioEngine;
 const INVALID_AUDIO_ID = -1;
 
 // TODO: set state before playing
-export class AudioPlayer implements OperationQueueable {
+export class AudioPlayer implements IAudioPlayer {
     private _url: string;
     private _id: number = INVALID_AUDIO_ID;
+    private _eventTarget: EventTarget = new EventTarget();
     private _state: AudioState = AudioState.INIT;
 
     private _onHide?: () => void;
     private _onShow?: () => void;
-
-    // NOTE: the implemented interface properties need to be public access
-    public _eventTarget: EventTarget = new EventTarget();
-    public _operationQueue: OperationInfo[] = [];
 
     private _beforePlaying = {
         duration: 0, // wrong value before playing
@@ -89,9 +85,6 @@ export class AudioPlayer implements OperationQueueable {
         return this._id !== INVALID_AUDIO_ID;
     }
 
-    get src () {
-        return this._url;
-    }
     get type (): AudioType {
         return AudioType.NATIVE_AUDIO;
     }
@@ -137,8 +130,6 @@ export class AudioPlayer implements OperationQueueable {
         }
         return audioEngine.getCurrentTime(this._id);
     }
-
-    @enqueueOperation
     seek (time: number): Promise<void> {
         return new Promise((resolve) => {
             time = clamp(time, 0, this.duration);
@@ -175,8 +166,6 @@ export class AudioPlayer implements OperationQueueable {
             },
         };
     }
-
-    @enqueueOperation
     play (): Promise<void> {
         return new Promise((resolve) => {
             if (this._isValid) {
@@ -204,8 +193,6 @@ export class AudioPlayer implements OperationQueueable {
             resolve();
         });
     }
-
-    @enqueueOperation
     pause (): Promise<void> {
         return new Promise((resolve) => {
             if (this._isValid) {
@@ -215,8 +202,6 @@ export class AudioPlayer implements OperationQueueable {
             resolve();
         });
     }
-
-    @enqueueOperation
     stop (): Promise<void> {
         return new Promise((resolve) => {
             if (this._isValid) {

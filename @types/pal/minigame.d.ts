@@ -1,5 +1,5 @@
 declare module 'pal/minigame' {
-    export const minigame: IMiniGame;
+    export const mg: IMiniGame;
     export interface IMiniGame {
         // system
         isDevTool: boolean;

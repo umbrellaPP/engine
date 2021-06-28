@@ -4,15 +4,15 @@ import { cloneObject } from '../utils';
 
 declare let qg: any;
 
-// @ts-expect-error can't init minigame when it's declared
-const minigame: IMiniGame = {};
-cloneObject(minigame, qg);
+// @ts-expect-error can't init mg when it's declared
+const mg: IMiniGame = {};
+cloneObject(mg, qg);
 
 // #region SystemInfo
-const systemInfo = minigame.getSystemInfoSync();
-minigame.isDevTool = false;
+const systemInfo = mg.getSystemInfoSync();
+mg.isDevTool = false;
 
-minigame.isLandscape = systemInfo.screenWidth > systemInfo.screenHeight;
+mg.isLandscape = systemInfo.screenWidth > systemInfo.screenHeight;
 // init landscapeOrientation as LANDSCAPE_RIGHT
 const landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
 // NOTE: onDeviceOrientationChange is not supported on this platform
@@ -23,24 +23,24 @@ const landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
 //         landscapeOrientation = Orientation.LANDSCAPE_LEFT;
 //     }
 // });
-Object.defineProperty(minigame, 'orientation', {
+Object.defineProperty(mg, 'orientation', {
     get () {
-        return minigame.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
+        return mg.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
     },
 });
 // #endregion SystemInfo
 
 // #region TouchEvent
-minigame.onTouchStart = function (cb) {
+mg.onTouchStart = function (cb) {
     window.canvas.ontouchstart = cb;
 };
-minigame.onTouchMove = function (cb) {
+mg.onTouchMove = function (cb) {
     window.canvas.ontouchmove = cb;
 };
-minigame.onTouchEnd = function (cb) {
+mg.onTouchEnd = function (cb) {
     window.canvas.ontouchend = cb;
 };
-minigame.onTouchCancel = function (cb) {
+mg.onTouchCancel = function (cb) {
     window.canvas.ontouchcancel = cb;
 };
 // #endregion TouchEvent
@@ -54,14 +54,14 @@ minigame.onTouchCancel = function (cb) {
 // #region Accelerometer
 let _customAccelerometerCb: AccelerometerChangeCallback | undefined;
 let _innerAccelerometerCb: AccelerometerChangeCallback | undefined;
-minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
+mg.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
     // qg.offAccelerometerChange() is not supported.
     // so we can only register AccelerometerChange callback, but can't unregister.
     if (!_innerAccelerometerCb) {
         _innerAccelerometerCb = (res: any) => {
             let x = res.x;
             let y = res.y;
-            if (minigame.isLandscape) {
+            if (mg.isLandscape) {
                 const orientationFactor = (landscapeOrientation === Orientation.LANDSCAPE_RIGHT ? 1 : -1);
                 const tmp = x;
                 x = -y * orientationFactor;
@@ -82,15 +82,15 @@ minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
     }
     _customAccelerometerCb = cb;
 };
-minigame.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
+mg.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
     // qg.offAccelerometerChange() is not supported.
     _customAccelerometerCb = undefined;
 };
 // #endregion Accelerometer
 
-minigame.getSafeArea = function () {
+mg.getSafeArea = function () {
     console.warn('getSafeArea is not supported on this platform');
-    const systemInfo =  minigame.getSystemInfoSync();
+    const systemInfo =  mg.getSystemInfoSync();
     return {
         top: 0,
         left: 0,
@@ -102,4 +102,4 @@ minigame.getSafeArea = function () {
 };
 // #endregion SafeArea
 
-export { minigame };
+export { mg };

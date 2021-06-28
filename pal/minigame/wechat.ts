@@ -4,14 +4,14 @@ import { cloneObject } from '../utils';
 
 declare let wx: any;
 
-// @ts-expect-error can't init minigame when it's declared
-const minigame: IMiniGame = {};
-cloneObject(minigame, wx);
+// @ts-expect-error can't init mg when it's declared
+const mg: IMiniGame = {};
+cloneObject(mg, wx);
 
 // #region SystemInfo
 let _cachedSystemInfo: SystemInfo = wx.getSystemInfoSync();
-// @ts-expect-error TODO: move into minigame.d.ts
-minigame.testAndUpdateSystemInfoCache = function (testAmount: number, testInterval: number) {
+// @ts-expect-error TODO: move into mg.d.ts
+mg.testAndUpdateSystemInfoCache = function (testAmount: number, testInterval: number) {
     let successfullyTestTimes = 0;
     let intervalTimer: number | null = null;
     function testCachedSystemInfo () {
@@ -29,15 +29,15 @@ minigame.testAndUpdateSystemInfoCache = function (testAmount: number, testInterv
     intervalTimer = setInterval(testCachedSystemInfo, testInterval);
 };
 // @ts-expect-error TODO: update when view resize
-minigame.testAndUpdateSystemInfoCache(10, 500);
-minigame.getSystemInfoSync = function () {
+mg.testAndUpdateSystemInfoCache(10, 500);
+mg.getSystemInfoSync = function () {
     return _cachedSystemInfo;
 };
 
-const systemInfo = minigame.getSystemInfoSync();
-minigame.isDevTool = (systemInfo.platform === 'devtools');
+const systemInfo = mg.getSystemInfoSync();
+mg.isDevTool = (systemInfo.platform === 'devtools');
 // NOTE: size and orientation info is wrong at the init phase, especially on iOS device
-Object.defineProperty(minigame, 'isLandscape', {
+Object.defineProperty(mg, 'isLandscape', {
     get () {
         const locSystemInfo = wx.getSystemInfoSync() as SystemInfo;
         if (typeof locSystemInfo.deviceOrientation === 'string') {
@@ -51,7 +51,7 @@ Object.defineProperty(minigame, 'isLandscape', {
 let landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
 if (systemInfo.platform.toLocaleLowerCase() !== 'android') {
     // onDeviceOrientationChange doesn't work well on Android.
-    // see this issue: https://developers.weixin.qq.com/community/minigame/doc/000482138dc460e56cfaa5cb15bc00
+    // see this issue: https://developers.weixin.qq.com/community/mg/doc/000482138dc460e56cfaa5cb15bc00
     wx.onDeviceOrientationChange((res) => {
         if (res.value === 'landscape') {
             landscapeOrientation = Orientation.LANDSCAPE_RIGHT;
@@ -60,23 +60,23 @@ if (systemInfo.platform.toLocaleLowerCase() !== 'android') {
         }
     });
 }
-Object.defineProperty(minigame, 'orientation', {
+Object.defineProperty(mg, 'orientation', {
     get () {
-        return minigame.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
+        return mg.isLandscape ? landscapeOrientation : Orientation.PORTRAIT;
     },
 });
 // #endregion SystemInfo
 
 // #region Accelerometer
 let _accelerometerCb: AccelerometerChangeCallback | undefined;
-minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
-    minigame.offAccelerometerChange();
+mg.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
+    mg.offAccelerometerChange();
     // onAccelerometerChange would start accelerometer
     // so we won't call this method here
     _accelerometerCb = (res: any) => {
         let x = res.x;
         let y = res.y;
-        if (minigame.isLandscape) {
+        if (mg.isLandscape) {
             const orientationFactor = (landscapeOrientation === Orientation.LANDSCAPE_RIGHT ? 1 : -1);
             const tmp = x;
             x = -y * orientationFactor;
@@ -91,13 +91,13 @@ minigame.onAccelerometerChange = function (cb: AccelerometerChangeCallback) {
         cb(resClone);
     };
 };
-minigame.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
+mg.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
     if (_accelerometerCb) {
         wx.offAccelerometerChange(_accelerometerCb);
         _accelerometerCb = undefined;
     }
 };
-minigame.startAccelerometer = function (res: any) {
+mg.startAccelerometer = function (res: any) {
     if (_accelerometerCb) {
         wx.onAccelerometerChange(_accelerometerCb);
     }
@@ -106,10 +106,10 @@ minigame.startAccelerometer = function (res: any) {
 // #endregion Accelerometer
 
 // FIX_ME: wrong safe area when orientation is landscape left
-minigame.getSafeArea = function () {
+mg.getSafeArea = function () {
     const locSystemInfo = wx.getSystemInfoSync() as SystemInfo;
     return locSystemInfo.safeArea;
 };
 // #endregion SafeArea
 
-export { minigame };
+export { mg };

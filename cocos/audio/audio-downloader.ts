@@ -29,7 +29,7 @@
  */
 
 import { AudioPlayer } from 'pal/audio';
-import { AudioClip, AudioMeta } from './audio-clip';
+import { AudioClip } from './assets/clip';
 import { CompleteCallback, IDownloadParseOptions } from '../core/asset-manager/shared';
 import downloader from '../core/asset-manager/downloader';
 import factory from '../core/asset-manager/factory';
@@ -38,20 +38,14 @@ export function loadAudioPlayer (url: string, options: IDownloadParseOptions, on
     AudioPlayer.load(url, {
         audioLoadMode: options.audioLoadMode,
     }).then((player) => {
-        const audioMeta: AudioMeta = {
-            url,
-            duration: player.duration,
-            type: player.type,
-        };
-        player.destroy();
-        onComplete(null, audioMeta);
+        onComplete(null, player);
     }).catch((err) => {
         onComplete(err);
     });
 }
 
 function createAudioClip (id: string,
-    data: AudioMeta,
+    data: AudioPlayer,
     options: IDownloadParseOptions,
     onComplete: CompleteCallback<AudioClip>) {
     const out = new AudioClip();
