@@ -126,7 +126,7 @@ export class OneShotAudioWeb {
         audioContextAgent!.runContext().then(() => {
             this._bufferSourceNode.start();
             this.onPlay?.();
-            window.setTimeout(() => {
+            setTimeout(() => {
                 this.onEnd?.();
             }, this._duration * 1000);
         }).catch((e) => {});
@@ -312,7 +312,7 @@ export class AudioPlayerWeb implements OperationQueueable {
                         this._state = AudioState.INIT;
                     }
                 };
-                window.clearTimeout(this._currentTimer);
+                clearTimeout(this._currentTimer);
                 this._currentTimer = window.setTimeout(checkEnded, (this._audioBuffer.duration - this._playTimeOffset) * 1000);
                 resolve();
             }).catch((e) => {});
@@ -326,7 +326,7 @@ export class AudioPlayerWeb implements OperationQueueable {
         }
         this._playTimeOffset = (audioContextAgent!.currentTime - this._startTime + this._playTimeOffset) % this._audioBuffer.duration;
         this._state = AudioState.PAUSED;
-        window.clearTimeout(this._currentTimer);
+        clearTimeout(this._currentTimer);
         this._sourceNode.stop();
         return Promise.resolve();
     }
@@ -338,7 +338,7 @@ export class AudioPlayerWeb implements OperationQueueable {
         }
         this._playTimeOffset = 0;
         this._state = AudioState.STOPPED;
-        window.clearTimeout(this._currentTimer);
+        clearTimeout(this._currentTimer);
         this._sourceNode.stop();
         return Promise.resolve();
     }
