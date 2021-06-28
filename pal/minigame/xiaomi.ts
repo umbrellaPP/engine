@@ -88,28 +88,12 @@ minigame.offAccelerometerChange = function (cb?: AccelerometerChangeCallback) {
 };
 // #endregion Accelerometer
 
-// #region InnerAudioContext
 minigame.createInnerAudioContext = createInnerAudioContextPolyfill(qg, {
     onPlay: true,
     onPause: true,
     onStop: true,
     onSeek: false,
 });
-const originalCreateInnerAudioContext = minigame.createInnerAudioContext;
-minigame.createInnerAudioContext = function () {
-    const audioContext = originalCreateInnerAudioContext.call(minigame);
-    const originalStop = audioContext.stop;
-    Object.defineProperty(audioContext, 'stop', {
-        configurable: true,
-        value () {
-            // NOTE: stop won't seek to 0 when audio is paused on Xiaomi platform.
-            audioContext.seek(0);
-            originalStop.call(audioContext);
-        },
-    });
-    return audioContext;
-};
-// #endregion InnerAudioContext
 
 // #region SafeArea
 minigame.getSafeArea = function () {
