@@ -130,38 +130,6 @@ export class SystemEvent extends EventTarget {
         }
         super.on(type, callback, target, once);
 
-        // Keyboard
-        if (type === SystemEventType.KEY_DOWN || type === SystemEventType.KEY_UP) {
-            if (!keyboardListener) {
-                keyboardListener = EventListener.create({
-                    event: EventListener.KEYBOARD,
-                    onKeyDown (keyCode: number, event: EventKeyboard) {
-                        systemEvent.emit(event.type, event);
-                    },
-                    onKeyPressed (keyCode: number, event: EventKeyboard) {
-                        systemEvent.emit(event.type, event);
-                    },
-                    onKeyReleased (keyCode: number, event: EventKeyboard) {
-                        systemEvent.emit(event.type, event);
-                    },
-                });
-                eventManager.addListener(keyboardListener, 256);
-            }
-        }
-
-        // Acceleration
-        if (type === SystemEventType.DEVICEMOTION) {
-            if (!accelerationListener) {
-                accelerationListener = EventListener.create({
-                    event: EventListener.ACCELERATION,
-                    callback (acc: any, event: EventAcceleration) {
-                        legacyCC.systemEvent.emit(event.type, event);
-                    },
-                });
-                eventManager.addListener(accelerationListener, 256);
-            }
-        }
-
         // touch
         if (type === SystemEventType.TOUCH_START
             || type === SystemEventType.TOUCH_MOVE

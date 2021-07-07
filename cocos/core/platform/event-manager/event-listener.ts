@@ -30,7 +30,7 @@
  * @hidden
  */
 
-import { EventKeyboard, EventAcceleration, EventMouse } from './events';
+import { EventMouse } from './events';
 import { Component } from '../../components';
 import { legacyCC } from '../../global-exports';
 import { logID, assertID } from '../debug';
@@ -50,8 +50,8 @@ export interface IListenerMask {
 /**
  * @en The base class of event listener.                                                                        <br/>
  * If you need custom listener which with different callback, you need to inherit this class.               <br/>
- * For instance, you could refer to EventListenerAcceleration, EventListenerKeyboard,                       <br/>
- * EventListenerTouchOneByOne, EventListenerCustom.<br/>
+ * For instance, you could refer to EventListenerTouchOneByOne, EventListenerCustom,                       <br/>
+ * .<br/>
  * @zh 封装用户的事件处理逻辑
  * 注意：这是一个抽象类，开发者不应该直接实例化这个类，请参考 [[create]] 。
  */
@@ -80,35 +80,21 @@ export class EventListener {
     public static TOUCH_ALL_AT_ONCE = 2;
 
     /**
-     * @en The type code of keyboard event listener.<br/>
-     * @zh 键盘事件监听器类型
-     */
-    public static KEYBOARD = 3;
-
-    /**
      * @en The type code of mouse event listener.<br/>
      * @zh 鼠标事件监听器类型
      */
-    public static MOUSE = 4;
-
-    /**
-     * @en The type code of acceleration event listener.<br/>
-     * @zh 加速器事件监听器类型
-     */
-    public static ACCELERATION = 6;
+    public static MOUSE = 3;
 
     /**
      * @en The type code of custom event listener.<br/>
      * @zh 自定义事件监听器类型
      */
-    public static CUSTOM = 8;
+    public static CUSTOM = 4;
 
     public static ListenerID = {
         MOUSE: '__cc_mouse',
         TOUCH_ONE_BY_ONE: '__cc_touch_one_by_one',
         TOUCH_ALL_AT_ONCE: '__cc_touch_all_at_once',
-        KEYBOARD: '__cc_keyboard',
-        ACCELERATION: '__cc_acceleration',
     };
 
     /**
@@ -132,11 +118,6 @@ export class EventListener {
             listener = new TouchAllAtOnceEventListener();
         } else if (listenerType === legacyCC.EventListener.MOUSE) {
             listener = new MouseEventListener();
-        } else if (listenerType === legacyCC.EventListener.KEYBOARD) {
-            listener = new KeyboardEventListener();
-        } else if (listenerType === legacyCC.EventListener.ACCELERATION) {
-            listener = new AccelerationEventListener(argObj.callback);
-            delete argObj.callback;
         }
 
         if (listener) {
@@ -463,77 +444,6 @@ export class TouchAllAtOnceEventListener extends EventListener {
         if (this.onTouchesBegan === null && this.onTouchesMoved === null
             && this.onTouchesEnded === null && this.onTouchesCancelled === null) {
             logID(1802);
-            return false;
-        }
-        return true;
-    }
-}
-
-// Acceleration
-export class AccelerationEventListener extends EventListener {
-    public _onAccelerationEvent: Function | null = null;
-
-    constructor (callback: Function | null) {
-        super(EventListener.ACCELERATION, ListenerID.ACCELERATION, null);
-        this._onEvent = (event: any) => this._callback(event);
-        this._onAccelerationEvent = callback;
-    }
-
-    public _callback (event: EventAcceleration) {
-        if (this._onAccelerationEvent) {
-            this._onAccelerationEvent(event.acc, event);
-        }
-    }
-
-    public checkAvailable () {
-        assertID(this._onAccelerationEvent, 1803);
-        return true;
-    }
-
-    public clone () {
-        return new AccelerationEventListener(this._onAccelerationEvent);
-    }
-}
-
-// Keyboard
-export class KeyboardEventListener extends EventListener {
-    public onKeyDown?: Function = undefined;
-    public onKeyPressed?: Function = undefined;  // deprecated
-    public onKeyReleased?: Function = undefined;
-
-    constructor () {
-        super(EventListener.KEYBOARD, ListenerID.KEYBOARD, null);
-        this._onEvent = (event: any) => this._callback(event);
-    }
-
-    public _callback (event: EventKeyboard) {
-        switch (event.type) {
-        // TODO: to support in Input module
-        // case 'keypress':
-        //     this.onKeyDown?.(event.keyCode, event);
-        //     break;
-        case SystemEventType.KEY_DOWN:
-            this.onKeyPressed?.(event.keyCode, event);
-            break;
-        case SystemEventType.KEY_UP:
-            this.onKeyReleased?.(event.keyCode, event);
-            break;
-        default:
-            break;
-        }
-    }
-
-    public clone () {
-        const eventListener = new KeyboardEventListener();
-        eventListener.onKeyDown = this.onKeyDown;
-        eventListener.onKeyPressed = this.onKeyPressed;
-        eventListener.onKeyReleased = this.onKeyReleased;
-        return eventListener;
-    }
-
-    public checkAvailable () {
-        if (this.onKeyDown === null && this.onKeyPressed === null && this.onKeyReleased === null) {
-            logID(1800);
             return false;
         }
         return true;

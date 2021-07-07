@@ -96,12 +96,6 @@ class _EventListenerVector {
 
 function __getListenerID (event: Event) {
     const type = event.type;
-    if (type === SystemEventType.DEVICEMOTION) {
-        return ListenerID.ACCELERATION;
-    }
-    if (keyboardEvents.includes(type)) {
-        return ListenerID.KEYBOARD;
-    }
     if (mouseEvents.includes(type)) {
         return ListenerID.MOUSE;
     }
@@ -398,8 +392,9 @@ class EventManager {
      *
      * 下列是目前存在监听器类型：       <br/>
      * `EventListener.UNKNOWN`       <br/>
-     * `EventListener.KEYBOARD`      <br/>
-     * `EventListener.ACCELERATION`，<br/>
+     * `EventListener.TOUCH_ONE_BY_ONE`     <br/>
+     * `EventListener.TOUCH_ONE_BY_ONE`     <br/>
+     * `EventListener.MOUSE`                <br/>
      *
      * @param listenerType - 监听器类型。
      * @param recursive - 递归子节点的同类型监听器一并移除。默认为 false。
@@ -453,10 +448,6 @@ class EventManager {
             this._removeListenersForListenerID(ListenerID.TOUCH_ALL_AT_ONCE);
         } else if (listenerType === legacyCC.EventListener.MOUSE) {
             this._removeListenersForListenerID(ListenerID.MOUSE);
-        } else if (listenerType === legacyCC.EventListener.ACCELERATION) {
-            this._removeListenersForListenerID(ListenerID.ACCELERATION);
-        } else if (listenerType === legacyCC.EventListener.KEYBOARD) {
-            this._removeListenersForListenerID(ListenerID.KEYBOARD);
         } else {
             logID(3501);
         }

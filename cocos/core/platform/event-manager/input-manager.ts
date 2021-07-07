@@ -39,6 +39,7 @@ import { legacyCC } from '../../global-exports';
 import { logID } from '../debug';
 import { Acceleration } from './acceleration';
 import { SystemEventType } from './event-enum';
+import { systemEvent } from './system-event';
 
 const TOUCH_TIMEOUT = macro.TOUCH_TIMEOUT;
 
@@ -437,18 +438,18 @@ class InputManager {
         // input._keyboard.onDown((inputEvent) => {
         //     eventManager.dispatchEvent(new EventKeyboard(inputEvent.code, 'keypress'));
         // });
-        input._keyboard.onPressing((inputEvent)  => {
-            eventManager.dispatchEvent(new EventKeyboard(inputEvent.code, SystemEventType.KEY_DOWN));
+        input._keyboard.onPressing((inputEvent) => {
+            systemEvent.emit(SystemEventType.KEY_DOWN, new EventKeyboard(inputEvent.code, SystemEventType.KEY_DOWN));
         });
-        input._keyboard.onUp((inputEvent)  => {
-            eventManager.dispatchEvent(new EventKeyboard(inputEvent.code, SystemEventType.KEY_UP));
+        input._keyboard.onUp((inputEvent) => {
+            systemEvent.emit(SystemEventType.KEY_UP, new EventKeyboard(inputEvent.code, SystemEventType.KEY_UP));
         });
     }
 
     private _registerAccelerometerEvent () {
         input._accelerometer.onChange((inputEvent: AccelerometerInputEvent) => {
             const { x, y, z, timestamp } = inputEvent;
-            eventManager.dispatchEvent(new EventAcceleration(new Acceleration(x, y, z, timestamp)));
+            systemEvent.emit(SystemEventType.DEVICEMOTION, new Acceleration(x, y, z, timestamp));
         });
     }
     // #endregion Event Register
