@@ -84,11 +84,6 @@ export class EventListener {
      */
     public static CUSTOM = 3;
 
-    public static ListenerID = {
-        MOUSE: '__cc_mouse',
-        TOUCH: '__cc_touch',
-    };
-
     /**
      * @en Create a EventListener object with configuration including the event type, handlers and other parameters.<br/>
      * In handlers, this refer to the event listener object itself.<br/>
@@ -133,9 +128,6 @@ export class EventListener {
     // Event listener type
     private _type: number;
 
-    // Event listener ID
-    private _listenerID: string;
-
     // Whether the listener has been added to dispatcher.
     private _registered = false;
 
@@ -156,10 +148,9 @@ export class EventListener {
         return this._onEvent;
     }
 
-    constructor (type: number, listenerID: string, callback: ((...args: any[]) => any) | null) {
+    constructor (type: number, callback: ((...args: any[]) => any) | null) {
+        this._type = type;
         this._onEvent = callback;
-        this._type = type || 0;
-        this._listenerID = listenerID || '';
     }
 
     /**
@@ -220,16 +211,6 @@ export class EventListener {
      */
     public _getType () {
         return this._type;
-    }
-
-    /**
-     * @en Gets the listener ID of this listener<br/>
-     * When event is being dispatched, listener ID is used as key for searching listeners according to event type.<br/>
-     * @zh 获取此侦听器的侦听器 ID。<br/>
-     * 调度事件时，侦听器 ID 用作根据事件类型搜索侦听器的键。
-     */
-    public _getListenerID () {
-        return this._listenerID;
     }
 
     /**
@@ -315,8 +296,6 @@ export class EventListener {
     }
 }
 
-const ListenerID = EventListener.ListenerID;
-
 export class MouseEventListener extends EventListener {
     public onMouseDown: Function | null = null;
     public onMouseUp: Function | null = null;
@@ -324,7 +303,7 @@ export class MouseEventListener extends EventListener {
     public onMouseScroll: Function | null = null;
 
     constructor () {
-        super(EventListener.MOUSE, ListenerID.MOUSE, null);
+        super(EventListener.MOUSE, null);
         this._onEvent = (event: any) => this._callback(event);
     }
 
@@ -379,7 +358,7 @@ export class TouchEventListener extends EventListener {
     public _claimedTouches: any[] = [];
 
     constructor () {
-        super(EventListener.TOUCH, ListenerID.TOUCH, null);
+        super(EventListener.TOUCH, null);
     }
 
     public setSwallowTouches (needSwallow) {
