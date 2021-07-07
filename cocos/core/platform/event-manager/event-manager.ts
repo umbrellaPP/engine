@@ -1026,34 +1026,6 @@ class EventManager {
         this._updateTouchListeners(event);
     }
 
-    private _onTouchesEventCallback (listener: any, callbackParams: any) {
-        // Skip if the listener was removed.
-        if (!listener._isRegistered()) {
-            return false;
-        }
-
-        const event = callbackParams.event;
-        const touches = callbackParams.touches;
-        const eventType = event.type;
-        event.currentTarget = listener._getSceneGraphPriority();
-        if (eventType === SystemEventType.TOUCH_START && listener.onTouchesBegan) {
-            listener.onTouchesBegan(touches, event);
-        } else if (eventType === SystemEventType.TOUCH_MOVE && listener.onTouchesMoved) {
-            listener.onTouchesMoved(touches, event);
-        } else if (eventType === SystemEventType.TOUCH_END && listener.onTouchesEnded) {
-            listener.onTouchesEnded(touches, event);
-        } else if (eventType === SystemEventType.TOUCH_CANCEL && listener.onTouchesCancelled) {
-            listener.onTouchesCancelled(touches, event);
-        }
-
-        // If the event was stopped, return directly.
-        if (event.isStopped()) {
-            eventManager._updateTouchListeners(event);
-            return true;
-        }
-        return false;
-    }
-
     private _associateNodeAndEventListener (node: Node, listener: EventListener) {
         let listeners = this._nodeListenersMap[node.uuid];
         if (!listeners) {
@@ -1119,37 +1091,6 @@ class EventManager {
         } else {
             locDirtyFlagMap[listenerType] |= flag;
         }
-    }
-
-    private _sortNumberAsc (a: number, b: number) {
-        return a - b;
-    }
-
-    private _removeListenerInCallback (listeners: EventListener[], callback) {
-        if (listeners == null) {
-            return false;
-        }
-
-        for (let i = listeners.length - 1; i >= 0; i--) {
-            const selListener = listeners[i];
-            // @ts-expect-error Private property access
-            if (selListener._onCustomEvent === callback || selListener.onEvent === callback) {
-                selListener._setRegistered(false);
-                if (selListener._getSceneGraphPriority() != null) {
-                    this._dissociateNodeAndEventListener((selListener as any)._getSceneGraphPriority(), selListener);
-                    // NULL out the node pointer so we don't have any dangling pointers to destroyed nodes.
-                    selListener._setSceneGraphPriority(null);
-                }
-
-                if (this._inDispatch === 0) {
-                    legacyCC.js.array.removeAt(listeners, i);
-                } else {
-                    this._toRemovedListeners.push(selListener);
-                }
-                return true;
-            }
-        }
-        return false;
     }
 
     private _removeListenerInVector (listeners: EventListener[], listener: EventListener) {
