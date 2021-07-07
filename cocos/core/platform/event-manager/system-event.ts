@@ -138,7 +138,7 @@ export class SystemEvent extends EventTarget {
         ) {
             if (!touchListener) {
                 touchListener = EventListener.create({
-                    event: EventListener.TOUCH_ONE_BY_ONE,
+                    event: EventListener.TOUCH,
                     onTouchBegan (touch: Touch, event: EventTouch) {
                         legacyCC.systemEvent.emit(event.type, touch, event);
                         return true;

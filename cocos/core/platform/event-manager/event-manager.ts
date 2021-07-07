@@ -31,7 +31,7 @@
 
 import { Event } from '../../event';
 import { EventTouch } from './events';
-import { EventListener, TouchOneByOneEventListener } from './event-listener';
+import { EventListener, TouchEventListener } from './event-listener';
 import { Node } from '../../scene-graph';
 import { macro } from '../macro';
 import { legacyCC } from '../../global-exports';
@@ -100,7 +100,7 @@ function __getListenerID (event: Event) {
         return ListenerID.MOUSE;
     }
     if (touchEvents.includes(type)) {
-        return ListenerID.TOUCH_ONE_BY_ONE;
+        return ListenerID.TOUCH;
     }
     return '';
 }
@@ -388,10 +388,9 @@ class EventManager {
      * 那么事件管理器将移除该类型的所有事件监听器。<br/>
      *
      * 下列是目前存在监听器类型：       <br/>
-     * `EventListener.UNKNOWN`       <br/>
-     * `EventListener.TOUCH_ONE_BY_ONE`     <br/>
-     * `EventListener.TOUCH_ONE_BY_ONE`     <br/>
-     * `EventListener.MOUSE`                <br/>
+     * `EventListener.UNKNOWN`      <br/>
+     * `EventListener.TOUCH`        <br/>
+     * `EventListener.MOUSE`        <br/>
      *
      * @param listenerType - 监听器类型。
      * @param recursive - 递归子节点的同类型监听器一并移除。默认为 false。
@@ -439,8 +438,8 @@ class EventManager {
                     this.removeListeners(locChild, true);
                 }
             }
-        } else if (listenerType === legacyCC.EventListener.TOUCH_ONE_BY_ONE) {
-            this._removeListenersForListenerID(ListenerID.TOUCH_ONE_BY_ONE);
+        } else if (listenerType === legacyCC.EventListener.TOUCH) {
+            this._removeListenersForListenerID(ListenerID.TOUCH);
         } else if (listenerType === legacyCC.EventListener.MOUSE) {
             this._removeListenersForListenerID(ListenerID.MOUSE);
         } else {
@@ -872,7 +871,7 @@ class EventManager {
             return;
         }
 
-        const listeners = this._listenersMap[ListenerID.TOUCH_ONE_BY_ONE];
+        const listeners = this._listenersMap[ListenerID.TOUCH];
         if (listeners) {
             this._onUpdateListeners(listeners);
         }
@@ -921,7 +920,7 @@ class EventManager {
         toRemovedListeners.length = 0;
     }
 
-    private _onTouchEventCallback (listener: TouchOneByOneEventListener, argsObj: any) {
+    private _onTouchEventCallback (listener: TouchEventListener, argsObj: any) {
         // Skip if the listener was removed.
         if (!listener._isRegistered()) {
             return false;
@@ -1007,28 +1006,28 @@ class EventManager {
     }
 
     private _dispatchTouchEvent (event: EventTouch) {
-        this._sortEventListeners(ListenerID.TOUCH_ONE_BY_ONE);
+        this._sortEventListeners(ListenerID.TOUCH);
 
-        const oneByOneListeners = this._getListeners(ListenerID.TOUCH_ONE_BY_ONE);
+        const touchListeners = this._getListeners(EventListener.TOUCH);
 
         // If there aren't any touch listeners, return directly.
-        if (!oneByOneListeners) {
+        if (!touchListeners) {
             return;
         }
 
         const originalTouches = event.getTouches();
         const mutableTouches = legacyCC.js.array.copy(originalTouches);
-        const oneByOneArgsObj = { event, needsMutableSet: (oneByOneListeners), touches: mutableTouches, selTouch: null };
+        const argsObj = { event, needsMutableSet: (touchListeners), touches: mutableTouches, selTouch: null };
 
         //
         // process the target handlers 1st
         //
-        if (oneByOneListeners) {
+        if (touchListeners) {
             for (let i = 0; i < originalTouches.length; ++i) {
                 const originalTouch = originalTouches[i];
                 event.touch = originalTouch;
                 event.propagationStopped = event.propagationImmediateStopped = false;
-                this._dispatchEventToListeners(oneByOneListeners, this._onTouchEventCallback, oneByOneArgsObj);
+                this._dispatchEventToListeners(touchListeners, this._onTouchEventCallback, argsObj);
             }
         }
 

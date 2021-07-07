@@ -680,7 +680,7 @@ export class NodeEventProcessor {
         if (_touchEvents.indexOf(type) !== -1) {
             if (!this.touchListener) {
                 this.touchListener = legacyCC.EventListener.create({
-                    event: legacyCC.EventListener.TOUCH_ONE_BY_ONE,
+                    event: legacyCC.EventListener.TOUCH,
                     swallowTouches: true,
                     owner: this._node,
                     mask: _searchComponentsInParent(this._node as Node, NodeEventProcessor._comp),

@@ -48,9 +48,8 @@ export interface IListenerMask {
 }
 
 /**
- * @en The base class of event listener.                                                                        <br/>
+ * @en The base class of event listener.                                                                    <br/>
  * If you need custom listener which with different callback, you need to inherit this class.               <br/>
- * For instance, you could refer to EventListenerTouchOneByOne, EventListenerCustom,                       <br/>
  * .<br/>
  * @zh 封装用户的事件处理逻辑
  * 注意：这是一个抽象类，开发者不应该直接实例化这个类，请参考 [[create]] 。
@@ -71,7 +70,7 @@ export class EventListener {
      * @en The type code of one by one touch event listener.<br/>
      * @zh 触摸事件监听器类型，触点会一个一个得分开被派发
      */
-    public static TOUCH_ONE_BY_ONE = 1;
+    public static TOUCH = 1;
 
     /**
      * @en The type code of mouse event listener.<br/>
@@ -87,7 +86,7 @@ export class EventListener {
 
     public static ListenerID = {
         MOUSE: '__cc_mouse',
-        TOUCH_ONE_BY_ONE: '__cc_touch_one_by_one',
+        TOUCH: '__cc_touch',
     };
 
     /**
@@ -105,8 +104,8 @@ export class EventListener {
         delete argObj.event;
 
         let listener: EventListener | null = null;
-        if (listenerType === legacyCC.EventListener.TOUCH_ONE_BY_ONE) {
-            listener = new TouchOneByOneEventListener();
+        if (listenerType === legacyCC.EventListener.TOUCH) {
+            listener = new TouchEventListener();
         } else if (listenerType === legacyCC.EventListener.MOUSE) {
             listener = new MouseEventListener();
         }
@@ -216,10 +215,8 @@ export class EventListener {
     /**
      * @en Gets the type of this listener<br/>
      * note： It's different from `EventType`, e.g.<br/>
-     * TouchEvent has two kinds of event listeners - EventListenerOneByOne<br/>
      * @zh 获取此侦听器的类型<br/>
      * 注意：它与`EventType`不同，例如<br/>
-     * TouchEvent 有两种事件监听器 -  EventListenerOneByOne
      */
     public _getType () {
         return this._type;
@@ -372,7 +369,7 @@ export class MouseEventListener extends EventListener {
     }
 }
 
-export class TouchOneByOneEventListener extends EventListener {
+export class TouchEventListener extends EventListener {
     public swallowTouches = false;
     public onTouchBegan: Function | null = null;
     public onTouchMoved: Function | null = null;
@@ -382,7 +379,7 @@ export class TouchOneByOneEventListener extends EventListener {
     public _claimedTouches: any[] = [];
 
     constructor () {
-        super(EventListener.TOUCH_ONE_BY_ONE, ListenerID.TOUCH_ONE_BY_ONE, null);
+        super(EventListener.TOUCH, ListenerID.TOUCH, null);
     }
 
     public setSwallowTouches (needSwallow) {
@@ -394,7 +391,7 @@ export class TouchOneByOneEventListener extends EventListener {
     }
 
     public clone () {
-        const eventListener = new TouchOneByOneEventListener();
+        const eventListener = new TouchEventListener();
         eventListener.onTouchBegan = this.onTouchBegan;
         eventListener.onTouchMoved = this.onTouchMoved;
         eventListener.onTouchEnded = this.onTouchEnded;
