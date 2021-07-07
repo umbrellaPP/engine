@@ -100,10 +100,7 @@ function __getListenerID (event: Event) {
         return ListenerID.MOUSE;
     }
     if (touchEvents.includes(type)) {
-        // Touch listener is very special, it contains two kinds of listeners:
-        // EventListenerTouchOneByOne and EventListenerTouchAllAtOnce.
-        // return UNKNOWN instead.
-        logID(2000);
+        return ListenerID.TOUCH_ONE_BY_ONE;
     }
     return '';
 }
@@ -444,8 +441,6 @@ class EventManager {
             }
         } else if (listenerType === legacyCC.EventListener.TOUCH_ONE_BY_ONE) {
             this._removeListenersForListenerID(ListenerID.TOUCH_ONE_BY_ONE);
-        } else if (listenerType === legacyCC.EventListener.TOUCH_ALL_AT_ONCE) {
-            this._removeListenersForListenerID(ListenerID.TOUCH_ALL_AT_ONCE);
         } else if (listenerType === legacyCC.EventListener.MOUSE) {
             this._removeListenersForListenerID(ListenerID.MOUSE);
         } else {
@@ -877,12 +872,7 @@ class EventManager {
             return;
         }
 
-        let listeners;
-        listeners = this._listenersMap[ListenerID.TOUCH_ONE_BY_ONE];
-        if (listeners) {
-            this._onUpdateListeners(listeners);
-        }
-        listeners = this._listenersMap[ListenerID.TOUCH_ALL_AT_ONCE];
+        const listeners = this._listenersMap[ListenerID.TOUCH_ONE_BY_ONE];
         if (listeners) {
             this._onUpdateListeners(listeners);
         }
@@ -1018,19 +1008,17 @@ class EventManager {
 
     private _dispatchTouchEvent (event: EventTouch) {
         this._sortEventListeners(ListenerID.TOUCH_ONE_BY_ONE);
-        this._sortEventListeners(ListenerID.TOUCH_ALL_AT_ONCE);
 
         const oneByOneListeners = this._getListeners(ListenerID.TOUCH_ONE_BY_ONE);
-        const allAtOnceListeners = this._getListeners(ListenerID.TOUCH_ALL_AT_ONCE);
 
         // If there aren't any touch listeners, return directly.
-        if (oneByOneListeners === null && allAtOnceListeners === null) {
+        if (!oneByOneListeners) {
             return;
         }
 
         const originalTouches = event.getTouches();
         const mutableTouches = legacyCC.js.array.copy(originalTouches);
-        const oneByOneArgsObj = { event, needsMutableSet: (oneByOneListeners && allAtOnceListeners), touches: mutableTouches, selTouch: null };
+        const oneByOneArgsObj = { event, needsMutableSet: (oneByOneListeners), touches: mutableTouches, selTouch: null };
 
         //
         // process the target handlers 1st
@@ -1044,15 +1032,6 @@ class EventManager {
             }
         }
 
-        //
-        // process standard handlers 2nd
-        //
-        if (allAtOnceListeners && mutableTouches.length > 0) {
-            this._dispatchEventToListeners(allAtOnceListeners, this._onTouchesEventCallback, { event, touches: mutableTouches });
-            if (event.isStopped()) {
-                return;
-            }
-        }
         this._updateTouchListeners(event);
     }
 

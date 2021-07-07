@@ -74,27 +74,20 @@ export class EventListener {
     public static TOUCH_ONE_BY_ONE = 1;
 
     /**
-     * @en The type code of all at once touch event listener.<br/>
-     * @zh 触摸事件监听器类型，触点会被一次性全部派发
-     */
-    public static TOUCH_ALL_AT_ONCE = 2;
-
-    /**
      * @en The type code of mouse event listener.<br/>
      * @zh 鼠标事件监听器类型
      */
-    public static MOUSE = 3;
+    public static MOUSE = 2;
 
     /**
      * @en The type code of custom event listener.<br/>
      * @zh 自定义事件监听器类型
      */
-    public static CUSTOM = 4;
+    public static CUSTOM = 3;
 
     public static ListenerID = {
         MOUSE: '__cc_mouse',
         TOUCH_ONE_BY_ONE: '__cc_touch_one_by_one',
-        TOUCH_ALL_AT_ONCE: '__cc_touch_all_at_once',
     };
 
     /**
@@ -114,8 +107,6 @@ export class EventListener {
         let listener: EventListener | null = null;
         if (listenerType === legacyCC.EventListener.TOUCH_ONE_BY_ONE) {
             listener = new TouchOneByOneEventListener();
-        } else if (listenerType === legacyCC.EventListener.TOUCH_ALL_AT_ONCE) {
-            listener = new TouchAllAtOnceEventListener();
         } else if (listenerType === legacyCC.EventListener.MOUSE) {
             listener = new MouseEventListener();
         }
@@ -225,10 +216,10 @@ export class EventListener {
     /**
      * @en Gets the type of this listener<br/>
      * note： It's different from `EventType`, e.g.<br/>
-     * TouchEvent has two kinds of event listeners - EventListenerOneByOne, EventListenerAllAtOnce<br/>
+     * TouchEvent has two kinds of event listeners - EventListenerOneByOne<br/>
      * @zh 获取此侦听器的类型<br/>
      * 注意：它与`EventType`不同，例如<br/>
-     * TouchEvent 有两种事件监听器 -  EventListenerOneByOne，EventListenerAllAtOnce
+     * TouchEvent 有两种事件监听器 -  EventListenerOneByOne
      */
     public _getType () {
         return this._type;
@@ -415,35 +406,6 @@ export class TouchOneByOneEventListener extends EventListener {
     public checkAvailable () {
         if (!this.onTouchBegan) {
             logID(1801);
-            return false;
-        }
-        return true;
-    }
-}
-
-export class TouchAllAtOnceEventListener extends EventListener {
-    public onTouchesBegan: Function | null = null;
-    public onTouchesMoved: Function | null = null;
-    public onTouchesEnded: Function | null = null;
-    public onTouchesCancelled: Function | null = null;
-
-    constructor () {
-        super(EventListener.TOUCH_ALL_AT_ONCE, ListenerID.TOUCH_ALL_AT_ONCE, null);
-    }
-
-    public clone () {
-        const eventListener = new TouchAllAtOnceEventListener();
-        eventListener.onTouchesBegan = this.onTouchesBegan;
-        eventListener.onTouchesMoved = this.onTouchesMoved;
-        eventListener.onTouchesEnded = this.onTouchesEnded;
-        eventListener.onTouchesCancelled = this.onTouchesCancelled;
-        return eventListener;
-    }
-
-    public checkAvailable () {
-        if (this.onTouchesBegan === null && this.onTouchesMoved === null
-            && this.onTouchesEnded === null && this.onTouchesCancelled === null) {
-            logID(1802);
             return false;
         }
         return true;
