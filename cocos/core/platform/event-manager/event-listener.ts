@@ -35,6 +35,7 @@ import { Component } from '../../components';
 import { legacyCC } from '../../global-exports';
 import { logID, assertID } from '../debug';
 import { SystemEventType } from './event-enum';
+import { Node } from '../../scene-graph';
 
 export interface IEventListenerCreateInfo {
     event?: number;
@@ -136,7 +137,7 @@ export class EventListener {
 
     // scene graph based priority
     // @type {Node}
-    private _node: any = null;          // scene graph based priority
+    private _node?: Node;          // scene graph based priority
 
     // Whether the listener is paused
     private _paused = true;        // Whether the listener is paused
@@ -250,7 +251,7 @@ export class EventListener {
      * @return 如果它是固定优先级侦听器，则为场景图优先级侦听器非 null 。
      */
     public _getSceneGraphPriority () {
-        return this._node as Node;
+        return this._node;
     }
 
     /**
