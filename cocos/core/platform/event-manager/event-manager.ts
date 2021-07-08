@@ -121,6 +121,7 @@ interface INodeListener {
 }
 
 class EventManager {
+    private readonly _managedEventListenerTypes = [EventListener.TOUCH, EventListener.MOUSE] as const;
     private _listenersMap: IListenersMap = {};
     private _priorityDirtyFlagMap: IPriorityFlag = {};
     private _nodeListenersMap: INodeListener = {};
@@ -131,6 +132,35 @@ class EventManager {
     private _isEnabled = false;
     private _currentTouch = null;
     private _currentTouchListener: any = null;
+
+    constructor () {
+        this._updateData();
+    }
+
+    /**
+     * @en
+     * Whether to enable dispatching events.
+     *
+     * @zh
+     * 启用或禁用事件管理器，禁用后不会分发任何事件。
+     *
+     * @param enabled - 是否启用事件管理器。
+     */
+    public setEnabled (enabled: boolean) {
+        this._isEnabled = enabled;
+    }
+
+    /**
+     * @en
+     * Checks whether dispatching events is enabled.
+     *
+     * @zh 检测事件管理器是否启用。
+     *
+     * @returns
+     */
+    public isEnabled () {
+        return this._isEnabled;
+    }
 
     /**
      * @en Pauses all listeners which are associated the specified target.
@@ -195,26 +225,83 @@ class EventManager {
         }
     }
 
-    public frameUpdateListeners () {
-        const locListenersMap = this._listenersMap;
-        const locPriorityDirtyFlagMap = this._priorityDirtyFlagMap;
-        for (const selKey in locListenersMap) {
-            if (locListenersMap[selKey].empty()) {
-                delete locPriorityDirtyFlagMap[selKey];
-                delete locListenersMap[selKey];
-            }
+    private _isDispatching () {
+        return this._inDispatch !== 0;
+    }
+
+    private _updateData () {
+        this._resetMap();
+        this._doAddListeners();
+        this._doRemoveListeners();
+    }
+
+    private _resetMap () {
+        this._managedEventListenerTypes.forEach((listenerType) => {
+            this._priorityDirtyFlagMap[listenerType] = DIRTY_NONE;
+            this._listenersMap[listenerType] = this._listenersMap[listenerType] || new _EventListenerVector();
+            this._listenersMap[listenerType].clear();
+        });
+    }
+
+    private _doAddListeners () {
+        const toAddedListeners = this._toAddedListeners;
+        if (toAddedListeners.length === 0) {
+            return;
         }
 
-        const locToAddedListeners = this._toAddedListeners;
-        if (locToAddedListeners.length !== 0) {
-            for (let i = 0, len = locToAddedListeners.length; i < len; i++) {
-                this._forceAddEventListener(locToAddedListeners[i]);
+        for (let i = 0, len = toAddedListeners.length; i < len; ++i) {
+            const listener = toAddedListeners[i];
+            const listenerType = listener._getType();
+            const listeners = this._listenersMap[listenerType];
+            listeners.push(listener);
+
+            if (listener._getFixedPriority() === 0) {
+                this._setDirty(listenerType, DIRTY_SCENE_GRAPH_PRIORITY);
+
+                const node: any = listener._getSceneGraphPriority();
+                if (node === null) {
+                    logID(3507);
+                }
+
+                this._associateNodeAndEventListener(node, listener);
+                if (node.activeInHierarchy) {
+                    this.resumeTarget(node);
+                }
+            } else {
+                this._setDirty(listenerType, DIRTY_FIXED_PRIORITY);
             }
-            locToAddedListeners.length = 0;
         }
-        if (this._toRemovedListeners.length !== 0) {
-            this._cleanToRemovedListeners();
+    }
+
+    private _doRemoveListeners () {
+        const toRemovedListeners = this._toRemovedListeners;
+        if (toRemovedListeners.length === 0) {
+            return;
         }
+        for (let i = 0; i < toRemovedListeners.length; ++i) {
+            const selListener = toRemovedListeners[i];
+            const listeners = this._listenersMap[selListener._getType()];
+            if (!listeners) {
+                continue;
+            }
+
+            const fixedPriorityListeners = listeners.getFixedPriorityListeners();
+            const sceneGraphPriorityListeners = listeners.getSceneGraphPriorityListeners();
+
+            if (sceneGraphPriorityListeners) {
+                const idx = sceneGraphPriorityListeners.indexOf(selListener);
+                if (idx !== -1) {
+                    sceneGraphPriorityListeners.splice(idx, 1);
+                }
+            }
+            if (fixedPriorityListeners) {
+                const idx = fixedPriorityListeners.indexOf(selListener);
+                if (idx !== -1) {
+                    fixedPriorityListeners.splice(idx, 1);
+                }
+            }
+        }
+        toRemovedListeners.length = 0;
     }
 
     /**
@@ -507,31 +594,6 @@ class EventManager {
 
     /**
      * @en
-     * Whether to enable dispatching events.
-     *
-     * @zh
-     * 启用或禁用事件管理器，禁用后不会分发任何事件。
-     *
-     * @param enabled - 是否启用事件管理器。
-     */
-    public setEnabled (enabled: boolean) {
-        this._isEnabled = enabled;
-    }
-
-    /**
-     * @en
-     * Checks whether dispatching events is enabled.
-     *
-     * @zh 检测事件管理器是否启用。
-     *
-     * @returns
-     */
-    public isEnabled () {
-        return this._isEnabled;
-    }
-
-    /**
-     * @en
      * Dispatches the event, also removes all EventListeners marked for deletion from the event dispatcher list.
      *
      * @zh
@@ -553,6 +615,9 @@ class EventManager {
         if (touchEvents.includes(event.getType())) {
             this._dispatchTouchEvent(event as EventTouch);
             this._inDispatch--;
+            if (!this._isDispatching()) {
+                this._updateData();
+            }
             return;
         }
 
@@ -565,6 +630,9 @@ class EventManager {
         }
 
         this._inDispatch--;
+        if (!this._isDispatching()) {
+            this._updateData();
+        }
     }
 
     public _onListenerCallback (listener: EventListener, event: Event) {
@@ -618,32 +686,6 @@ class EventManager {
             this._forceAddEventListener(listener);
         } else {
             this._toAddedListeners.push(listener);
-        }
-    }
-
-    private _forceAddEventListener (listener: EventListener) {
-        const listenerType = listener._getType();
-        let listeners = this._listenersMap[listenerType];
-        if (!listeners) {
-            listeners = new _EventListenerVector();
-            this._listenersMap[listenerType] = listeners;
-        }
-        listeners.push(listener);
-
-        if (listener._getFixedPriority() === 0) {
-            this._setDirty(listenerType, DIRTY_SCENE_GRAPH_PRIORITY);
-
-            const node: any = listener._getSceneGraphPriority();
-            if (node === null) {
-                logID(3507);
-            }
-
-            this._associateNodeAndEventListener(node, listener);
-            if (node.activeInHierarchy) {
-                this.resumeTarget(node);
-            }
-        } else {
-            this._setDirty(listenerType, DIRTY_FIXED_PRIORITY);
         }
     }
 
@@ -882,35 +924,6 @@ class EventManager {
         if (this._toRemovedListeners.length !== 0) {
             this._cleanToRemovedListeners();
         }
-    }
-
-    // Remove all listeners in _toRemoveListeners list and cleanup
-    private _cleanToRemovedListeners () {
-        const toRemovedListeners = this._toRemovedListeners;
-        for (let i = 0; i < toRemovedListeners.length; ++i) {
-            const selListener = toRemovedListeners[i];
-            const listeners = this._listenersMap[selListener._getType()];
-            if (!listeners) {
-                continue;
-            }
-
-            const fixedPriorityListeners = listeners.getFixedPriorityListeners();
-            const sceneGraphPriorityListeners = listeners.getSceneGraphPriorityListeners();
-
-            if (sceneGraphPriorityListeners) {
-                const idx = sceneGraphPriorityListeners.indexOf(selListener);
-                if (idx !== -1) {
-                    sceneGraphPriorityListeners.splice(idx, 1);
-                }
-            }
-            if (fixedPriorityListeners) {
-                const idx = fixedPriorityListeners.indexOf(selListener);
-                if (idx !== -1) {
-                    fixedPriorityListeners.splice(idx, 1);
-                }
-            }
-        }
-        toRemovedListeners.length = 0;
     }
 
     private _onTouchEventCallback (listener: TouchEventListener, argsObj: any) {

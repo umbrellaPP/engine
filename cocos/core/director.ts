@@ -919,7 +919,6 @@ export class Director extends EventTarget {
             this._root!.frameMove(this._deltaTime);
             this.emit(Director.EVENT_AFTER_DRAW);
 
-            eventManager.frameUpdateListeners();
             Node.resetHasChangedFlags();
             Node.clearNodeArray();
             this.emit(Director.EVENT_END_FRAME);
