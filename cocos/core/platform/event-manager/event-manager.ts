@@ -682,7 +682,7 @@ class EventManager {
     }
 
     private _addListener (listener: EventListener) {
-        if (this._inDispatch === 0) {
+        if (!this._isDispatching()) {
             this._forceAddEventListener(listener);
         } else {
             this._toAddedListeners.push(listener);
@@ -716,7 +716,7 @@ class EventManager {
                 selListener._setSceneGraphPriority(null);   // NULL out the node pointer so we don't have any dangling pointers to destroyed nodes.
             }
 
-            if (this._inDispatch === 0) {
+            if (!this._isDispatching()) {
                 legacyCC.js.array.removeAt(listenerVector, i);
             }
         }
@@ -735,7 +735,7 @@ class EventManager {
             // No need to check whether the dispatcher is dispatching event.
             delete this._priorityDirtyFlagMap[listenerType];
 
-            if (!this._inDispatch) {
+            if (!this._isDispatching()) {
                 listeners.clear();
                 delete this._listenersMap[listenerType];
             }
@@ -1121,7 +1121,7 @@ class EventManager {
                     selListener._setSceneGraphPriority(null);
                 }
 
-                if (this._inDispatch === 0) {
+                if (!this._isDispatching()) {
                     legacyCC.js.array.removeAt(listeners, i);
                 } else {
                     this._toRemovedListeners.push(selListener);
