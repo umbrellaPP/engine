@@ -37,6 +37,7 @@ import { macro } from '../macro';
 import { legacyCC } from '../../global-exports';
 import { errorID, warnID, logID, assertID } from '../debug';
 import { SystemEventType, SystemEventTypeUnion } from './event-enum';
+import { js } from '../../utils/js';
 
 function checkUINode (node) {
     if (node && node.getComponent('cc.UITransform')) {
@@ -47,6 +48,11 @@ function checkUINode (node) {
 
 const touchEvents: SystemEventTypeUnion[] = [SystemEventType.TOUCH_START, SystemEventType.TOUCH_MOVE, SystemEventType.TOUCH_END, SystemEventType.TOUCH_CANCEL];
 const mouseEvents: SystemEventTypeUnion[] = [SystemEventType.MOUSE_DOWN, SystemEventType.MOUSE_MOVE, SystemEventType.MOUSE_UP, SystemEventType.MOUSE_WHEEL];
+
+enum PriorityType {
+    SCENE_GRAPH,
+    FIXED,
+}
 
 class _EventListenerVector {
     public gt0Index = 0;
@@ -69,25 +75,24 @@ class _EventListenerVector {
         }
     }
 
-    public clearSceneGraphListeners () {
-        this._sceneGraphListeners.length = 0;
+    public clear (priorityType?: PriorityType) {
+        if (typeof priorityType === 'undefined') {
+            this._sceneGraphListeners.length = 0;
+            this._fixedListeners.length = 0;
+        } else if (priorityType === PriorityType.SCENE_GRAPH) {
+            this._sceneGraphListeners.length = 0;
+        } else if (priorityType === PriorityType.FIXED) {
+            this._fixedListeners.length = 0;
+        }
     }
 
-    public clearFixedListeners () {
-        this._fixedListeners.length = 0;
-    }
-
-    public clear () {
-        this._sceneGraphListeners.length = 0;
-        this._fixedListeners.length = 0;
-    }
-
-    public getFixedPriorityListeners () {
-        return this._fixedListeners;
-    }
-
-    public getSceneGraphPriorityListeners () {
-        return this._sceneGraphListeners;
+    // eslint-disable-next-line consistent-return
+    public getListeners (priorityType: PriorityType): EventListener[] {
+        if (priorityType === PriorityType.SCENE_GRAPH) {
+            return this._sceneGraphListeners;
+        } else {
+            return this._fixedListeners;
+        }
     }
 }
 
@@ -108,7 +113,7 @@ const DIRTY_FIXED_PRIORITY = 1 << 0;
 const DIRTY_SCENE_GRAPH_PRIORITY = 1 << 1;
 const DIRTY_ALL = 3;
 
-interface IListenersMap{
+interface IListenerVectorMap{
     [key: number]: _EventListenerVector;
 }
 
@@ -122,7 +127,7 @@ interface INodeListener {
 
 class EventManager {
     private readonly _managedEventListenerTypes = [EventListener.TOUCH, EventListener.MOUSE] as const;
-    private _listenersMap: IListenersMap = {};
+    private _listenerVectorMap: IListenerVectorMap = {};
     private _priorityDirtyFlagMap: IPriorityFlag = {};
     private _nodeListenersMap: INodeListener = {};
     private _toAddedListeners: EventListener[] = [];
@@ -225,6 +230,10 @@ class EventManager {
         }
     }
 
+    private _getListenerPriorityType (listener: EventListener): PriorityType {
+        return listener._getFixedPriority() === 0 ? PriorityType.SCENE_GRAPH : PriorityType.FIXED;
+    }
+
     private _isDispatching () {
         return this._inDispatch !== 0;
     }
@@ -238,8 +247,8 @@ class EventManager {
     private _resetMap () {
         this._managedEventListenerTypes.forEach((listenerType) => {
             this._priorityDirtyFlagMap[listenerType] = DIRTY_NONE;
-            this._listenersMap[listenerType] = this._listenersMap[listenerType] || new _EventListenerVector();
-            this._listenersMap[listenerType].clear();
+            this._listenerVectorMap[listenerType] = this._listenerVectorMap[listenerType] || new _EventListenerVector();
+            this._listenerVectorMap[listenerType].clear();
         });
     }
 
@@ -252,8 +261,8 @@ class EventManager {
         for (let i = 0, len = toAddedListeners.length; i < len; ++i) {
             const listener = toAddedListeners[i];
             const listenerType = listener._getType();
-            const listeners = this._listenersMap[listenerType];
-            listeners.push(listener);
+            const listenerVector = this._listenerVectorMap[listenerType];
+            listenerVector.push(listener);
 
             if (listener._getFixedPriority() === 0) {
                 this._setDirty(listenerType, DIRTY_SCENE_GRAPH_PRIORITY);
@@ -280,13 +289,13 @@ class EventManager {
         }
         for (let i = 0; i < toRemovedListeners.length; ++i) {
             const selListener = toRemovedListeners[i];
-            const listeners = this._listenersMap[selListener._getType()];
-            if (!listeners) {
+            const listenerVector = this._listenerVectorMap[selListener._getType()];
+            if (!listenerVector) {
                 continue;
             }
 
-            const fixedPriorityListeners = listeners.getFixedPriorityListeners();
-            const sceneGraphPriorityListeners = listeners.getSceneGraphPriorityListeners();
+            const fixedPriorityListeners = listenerVector.getFixedPriorityListeners();
+            const sceneGraphPriorityListeners = listenerVector.getSceneGraphPriorityListeners();
 
             if (sceneGraphPriorityListeners) {
                 const idx = sceneGraphPriorityListeners.indexOf(selListener);
@@ -306,20 +315,6 @@ class EventManager {
 
     /**
      * @en
-     * Query whether the specified event listener id has been added.
-     *
-     * @zh
-     * 查询指定的事件 ID 是否存在。
-     *
-     * @param listenerType - 监听器类型。
-     * @returns {EventListener}
-     */
-    public hasEventListener (listenerType: number) {
-        return !!this._getListeners(listenerType);
-    }
-
-    /**
-     * @en
      * <p>
      * Adds a event listener for a specified event.<br/>
      * if the parameter "nodeOrPriority" is a node,
@@ -335,70 +330,39 @@ class EventManager {
      *
      * @param listener - 指定事件监听器。
      * @param nodeOrPriority - 监听程序的优先级。
-     * @returns
+     * @returns {boolean} 是否注册成功
      */
-    public addListener (listener: EventListener, nodeOrPriority: any | number): any {
-        assertID(listener && nodeOrPriority, 3503);
-        if (!(legacyCC.js.isNumber(nodeOrPriority) || nodeOrPriority instanceof legacyCC._BaseNode)) {
-            warnID(3506);
-            return null;
-        }
-        if (!(listener instanceof legacyCC.EventListener)) {
-            assertID(!legacyCC.js.isNumber(nodeOrPriority), 3504);
-            listener = legacyCC.EventListener.create(listener);
-        } else if (listener._isRegistered()) {
+    public addListener (listener: EventListener, nodeOrPriority: Node | number): boolean {
+        if (listener._isRegistered()) {
             logID(3505);
-            return null;
+            return false;
         }
 
         if (!listener.checkAvailable()) {
-            return null;
+            return false;
         }
 
-        if (legacyCC.js.isNumber(nodeOrPriority)) {
+        if (typeof nodeOrPriority === 'number') {
             if (nodeOrPriority === 0) {
                 logID(3500);
-                return null;
+                return false;
             }
 
             listener._setSceneGraphPriority(null);
             listener._setFixedPriority(nodeOrPriority);
-            listener._setRegistered(true);
-            listener._setPaused(false);
-            this._addListener(listener);
         } else {
             if (!checkUINode(nodeOrPriority)) {
                 logID(3512);
-                return null;
+                return false;
             }
             listener._setSceneGraphPriority(nodeOrPriority);
             listener._setFixedPriority(0);
-            listener._setRegistered(true);
-            this._addListener(listener);
         }
+        listener._setRegistered(true);
+        listener._setPaused(false);
+        this._addListener(listener);
 
-        return listener;
-    }
-
-    /**
-     * @en
-     * Adds a Custom event listener. It will use a fixed priority of 1.
-     *
-     * @zh
-     * 向事件管理器添加一个自定义事件监听器。
-     *
-     * @param eventName - 自定义事件名。
-     * @param callback - 事件回调。
-     * @returns 返回自定义监听器。
-     */
-    public addCustomListener (eventName: string, callback: ()=>void) {
-        const listener = EventListener.create({
-            event: legacyCC.EventListener.CUSTOM,
-            eventName,
-            callback,
-        });
-        this.addListener(listener, 1);
-        return listener;
+        return true;
     }
 
     /**
@@ -409,54 +373,57 @@ class EventManager {
      * 移除一个已添加的监听器。
      *
      * @param listener - 需要移除的监听器。
+     * @returns {boolean} 是否移除成功
      */
     public removeListener (listener: EventListener) {
-        if (listener == null) {
-            return;
-        }
-
-        let isFound = false;
-        const locListener = this._listenersMap;
+        const targetProrityType = this._getListenerPriorityType(listener);
+        const listenerVectorMap = this._listenerVectorMap;
         if (listener === this._currentTouchListener) {
             this._currentTouchListener = this._currentTouch = null;
         }
-        for (const selKey in locListener) {
-            const listeners = locListener[selKey];
-            const fixedPriorityListeners = listeners.getFixedPriorityListeners();
-            const sceneGraphPriorityListeners = listeners.getSceneGraphPriorityListeners();
-
-            isFound = this._removeListenerInVector(sceneGraphPriorityListeners, listener);
-            if (isFound) {
-                // fixed #4160: Dirty flag need to be updated after listeners were removed.
-                this._setDirty(listener._getType(), DIRTY_SCENE_GRAPH_PRIORITY);
-            } else {
-                isFound = this._removeListenerInVector(fixedPriorityListeners, listener);
-                if (isFound) {
-                    this._setDirty(listener._getType(), DIRTY_FIXED_PRIORITY);
+        const listenerVector = listenerVectorMap[listener._getType()];
+        const listeners = listenerVector.getListeners(targetProrityType);
+        for (let i = listeners.length - 1; i >= 0; --i) {
+            const selListener = listeners[i];
+            if (selListener === listener) {
+                // TODO: 弄清楚哪些状态是 addListener 就需要更新的，哪些是 doAddListener 时，才需要更新的
+                // selListener._setRegistered(false);
+                // if (selListener._getSceneGraphPriority() != null) {
+                //     this._dissociateNodeAndEventListener((selListener as any)._getSceneGraphPriority(), selListener);
+                //     // NULL out the node pointer so we don't have any dangling pointers to destroyed nodes.
+                //     selListener._setSceneGraphPriority(null);
+                // }
+                if (!this._isDispatching()) {
+                    js.array.removeAt(listeners, i);
+                } else {
+                    this._toRemovedListeners.push(selListener);
                 }
+                return true;
             }
-
-            if (listeners.empty()) {
-                delete this._priorityDirtyFlagMap[listener._getType()];
-                delete locListener[selKey];
-            }
-
-            if (isFound) {
+        }
+        // If remove failed, maybe the listener is in toAddedListeners
+        const toAddedListeners = this._toAddedListeners;
+        for (let i = toAddedListeners.length - 1; i >= 0; i--) {
+            const selListener = toAddedListeners[i];
+            if (selListener === listener) {
+                js.array.removeAt(toAddedListeners, i);
+                selListener._setRegistered(false);
                 break;
             }
         }
+        return false;
+        // TODO: remember to set dirty after do remove or add listener
 
-        if (!isFound) {
-            const locToAddedListeners = this._toAddedListeners;
-            for (let i = locToAddedListeners.length - 1; i >= 0; i--) {
-                const selListener = locToAddedListeners[i];
-                if (selListener === listener) {
-                    legacyCC.js.array.removeAt(locToAddedListeners, i);
-                    selListener._setRegistered(false);
-                    break;
-                }
-            }
-        }
+        // isFound = this._removeListenerInVector(sceneGraphPriorityListeners, listener);
+        // if (isFound) {
+        //     // fixed #4160: Dirty flag need to be updated after listeners were removed.
+        //     this._setDirty(listener._getType(), DIRTY_SCENE_GRAPH_PRIORITY);
+        // } else {
+        //     isFound = this._removeListenerInVector(fixedPriorityListeners, listener);
+        //     if (isFound) {
+        //         this._setDirty(listener._getType(), DIRTY_FIXED_PRIORITY);
+        //     }
+        // }
     }
 
     /**
@@ -532,27 +499,14 @@ class EventManager {
 
     /**
      * @en
-     * Removes all custom listeners with the same event name.
-     *
-     * @zh
-     * 移除同一事件名的自定义事件监听器。
-     *
-     * @param customEventName - 自定义事件监听器名。
-     */
-    public removeCustomListeners (customEventName) {
-        this._removeListeners(customEventName);
-    }
-
-    /**
-     * @en
      * Removes all listeners.
      *
      * @zh
      * 移除所有事件监听器。
      */
     public removeAllListeners () {
-        const locListeners = this._listenersMap;
-        for (const selKey in locListeners) {
+        const listenerVector = this._listenerVectorMap;
+        for (const selKey in listenerVector) {
             this._removeListeners(Number.parseInt(selKey));
         }
     }
@@ -572,9 +526,9 @@ class EventManager {
             return;
         }
 
-        const locListeners = this._listenersMap;
-        for (const selKey in locListeners) {
-            const selListeners = locListeners[selKey];
+        const listenerVector = this._listenerVectorMap;
+        for (const selKey in listenerVector) {
+            const selListeners = listenerVector[selKey];
             const fixedPriorityListeners = selListeners.getFixedPriorityListeners();
             if (fixedPriorityListeners) {
                 const found = fixedPriorityListeners.indexOf(listener);
@@ -623,10 +577,10 @@ class EventManager {
 
         const listenerType = __getListenerType(event);
         this._sortEventListeners(listenerType);
-        const selListeners = this._listenersMap[listenerType];
-        if (selListeners != null) {
-            this._dispatchEventToListeners(selListeners, this._onListenerCallback, event);
-            this._onUpdateListeners(selListeners);
+        const listenerVector = this._listenerVectorMap[listenerType];
+        if (listenerVector != null) {
+            this._dispatchEventToListeners(listenerVector, this._onListenerCallback, event);
+            this._onUpdateListeners(listenerVector);
         }
 
         this._inDispatch--;
@@ -642,22 +596,6 @@ class EventManager {
             onEvent(event);
         }
         return event.isStopped();
-    }
-
-    /**
-     * @en
-     * Dispatches a Custom Event with a event name an optional user data.
-     *
-     * @zh
-     * 分发自定义事件。
-     *
-     * @param eventName - 自定义事件名。
-     * @param optionalUserData
-     */
-    public dispatchCustomEvent (eventName, optionalUserData) {
-        const ev = new legacyCC.Event.EventCustom(eventName);
-        ev.setUserData(optionalUserData);
-        this.dispatchEvent(ev);
     }
 
     private _setDirtyForNode (node: Node) {
@@ -689,10 +627,6 @@ class EventManager {
         }
     }
 
-    private _getListeners (listenerType: number) {
-        return this._listenersMap[listenerType];
-    }
-
     private _updateDirtyFlagForSceneGraph () {
         const locDirtyListeners = this._dirtyListeners;
 
@@ -722,11 +656,11 @@ class EventManager {
         }
     }
 
-    private _removeListeners (listenerType: number) {
-        const listeners = this._listenersMap[listenerType];
-        if (listeners) {
-            const fixedPriorityListeners = listeners.getFixedPriorityListeners();
-            const sceneGraphPriorityListeners = listeners.getSceneGraphPriorityListeners();
+    private _removeListenerVector (listenerType: number) {
+        const listenerVector = this._listenerVectorMap[listenerType];
+        if (listenerVector) {
+            const fixedPriorityListeners = listenerVector.getFixedPriorityListeners();
+            const sceneGraphPriorityListeners = listenerVector.getSceneGraphPriorityListeners();
 
             this._removeAllListenersInVector(sceneGraphPriorityListeners);
             this._removeAllListenersInVector(fixedPriorityListeners);
@@ -736,8 +670,8 @@ class EventManager {
             delete this._priorityDirtyFlagMap[listenerType];
 
             if (!this._isDispatching()) {
-                listeners.clear();
-                delete this._listenersMap[listenerType];
+                listenerVector.clear();
+                delete this._listenerVectorMap[listenerType];
             }
         }
 
@@ -775,18 +709,18 @@ class EventManager {
     }
 
     private _sortListenersOfSceneGraphPriority (listenerType: number) {
-        const listeners = this._getListeners(listenerType);
-        if (!listeners) {
+        const listenerVector = this._listenerVectorMap[listenerType];
+        if (!listenerVector) {
             return;
         }
 
-        const sceneGraphListener = listeners.getSceneGraphPriorityListeners();
+        const sceneGraphListener = listenerVector.getSceneGraphPriorityListeners();
         if (!sceneGraphListener || sceneGraphListener.length === 0) {
             return;
         }
 
         // After sort: priority < 0, > 0
-        const eventListeners = listeners.getSceneGraphPriorityListeners();
+        const eventListeners = listenerVector.getSceneGraphPriorityListeners();
         eventListeners.forEach((listener) => {
             const node: any = listener._getSceneGraphPriority();
             const trans = node._uiProps.uiTransformComp;
@@ -829,12 +763,12 @@ class EventManager {
     }
 
     private _sortListenersOfFixedPriority (listenerType: number) {
-        const listeners = this._listenersMap[listenerType];
-        if (!listeners) {
+        const listenerVector = this._listenerVectorMap[listenerType];
+        if (!listenerVector) {
             return;
         }
 
-        const fixedListeners = listeners.getFixedPriorityListeners();
+        const fixedListeners = listenerVector.getFixedPriorityListeners();
         if (!fixedListeners || fixedListeners.length === 0) {
             return;
         }
@@ -849,7 +783,7 @@ class EventManager {
             }
             ++index;
         }
-        listeners.gt0Index = index;
+        listenerVector.gt0Index = index;
     }
 
     private _sortListenersOfFixedPriorityAsc (l1: EventListener, l2: EventListener) {
@@ -906,9 +840,9 @@ class EventManager {
             return;
         }
 
-        const listeners = this._listenersMap[EventListener.TOUCH];
-        if (listeners) {
-            this._onUpdateListeners(listeners);
+        const listenerVector = this._listenerVectorMap[EventListener.TOUCH];
+        if (listenerVector) {
+            this._onUpdateListeners(listenerVector);
         }
 
         assertID(locInDispatch === 1, 3509);
@@ -1013,7 +947,7 @@ class EventManager {
 
     private _dispatchTouchEvent (event: EventTouch) {
         this._sortEventListeners(EventListener.TOUCH);
-        const touchListeners = this._getListeners(EventListener.TOUCH);
+        const touchListeners = this._listenerVectorMap[EventListener.TOUCH];
 
         // If there aren't any touch listeners, return directly.
         if (!touchListeners) {
@@ -1104,32 +1038,6 @@ class EventManager {
         } else {
             locDirtyFlagMap[listenerType] |= flag;
         }
-    }
-
-    private _removeListenerInVector (listeners: EventListener[], listener: EventListener) {
-        if (listeners == null) {
-            return false;
-        }
-
-        for (let i = listeners.length - 1; i >= 0; i--) {
-            const selListener = listeners[i];
-            if (selListener === listener) {
-                selListener._setRegistered(false);
-                if (selListener._getSceneGraphPriority() != null) {
-                    this._dissociateNodeAndEventListener((selListener as any)._getSceneGraphPriority(), selListener);
-                    // NULL out the node pointer so we don't have any dangling pointers to destroyed nodes.
-                    selListener._setSceneGraphPriority(null);
-                }
-
-                if (!this._isDispatching()) {
-                    legacyCC.js.array.removeAt(listeners, i);
-                } else {
-                    this._toRemovedListeners.push(selListener);
-                }
-                return true;
-            }
-        }
-        return false;
     }
 }
 
